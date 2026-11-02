@@ -5,6 +5,12 @@ import {
   calculateBuyerDecision, 
   generateSeoInterlinking 
 } from './intelligence';
+import {
+  normalizeMake,
+  normalizeModel,
+  normalizePowertrain,
+  normalizeOwnership
+} from './normalizer';
 
 const ACTIVE_VEHICLES_RESOURCE = '053cea08-09bc-40ec-8f7a-156f0677aff3';
 const WLTP_RESOURCE = '142afde2-6228-49f9-8a29-9b6c3a0cbe40';
@@ -291,17 +297,25 @@ export async function fetchVehicleReport(
 
   onProgress?.('מפעיל מנוע מודיעין מכני ובונה את דוח הרכב...', 90);
 
-  // Map fields cleanly
-  const make = activeRec.tozeret_nm || 'לא צוין';
-  const commercialName = activeRec.kinuy_mishari || activeRec.degem_nm || '';
+  // Map & normalize fields into clean, authoritative Israeli automotive terminology
+  const normMake = normalizeMake(activeRec.tozeret_nm, wltp.tozeret_eretz_nm);
+  const normModel = normalizeModel(activeRec.kinuy_mishari, activeRec.degem_nm, activeRec.ramat_gimur || wltp.ramat_gimur);
+  const normPowertrain = normalizePowertrain(activeRec.sug_delek_nm, wltp.technologiat_hanaa_nm, normModel.cleanModelEnglish);
+  const normOwnership = normalizeOwnership(activeRec.baalut, shinui.mkoriut_nm, shnatYitzur);
+
+  const make = normMake.nameHebrew;
+  const englishMake = normMake.nameEnglish;
+  const commercialName = normModel.cleanModelHebrew;
+  const englishCommercialName = normModel.cleanModelEnglish;
   const model = activeRec.degem_nm || commercialName;
-  const trimLevel = activeRec.ramat_gimur || wltp.ramat_gimur || 'סטנדרט';
-  const fuelType = activeRec.sug_delek_nm || wltp.delek_nm || 'בנזין';
+  const trimLevel = normModel.cleanTrim || 'סטנדרט';
+  const fuelType = normPowertrain.fuelLabel;
   const displacement = parseInt(wltp.nefah_manoa, 10) || 0;
   const horsepower = parseInt(wltp.koah_sus, 10) || 0;
   const licensingGroup = parseInt(wltp.kvuzat_agra_cd, 10) || 3;
+  const countryOfOrigin = normMake.countryOfOrigin || wltp.tozeret_eretz_nm;
 
-  // Resolve AI intelligence / knowledge base
+  // Resolve mechanical knowledge base
   const intelligence = resolveVehicleIntelligence(
     make,
     model,
@@ -313,14 +327,21 @@ export async function fetchVehicleReport(
     licensingGroup
   );
 
-  // Ownership & Hand Intelligence Calculation
+  // Ownership & Hand Intelligence
   const firstReg = activeRec.moed_aliya_lakvish || `${shnatYitzur}-01`;
-  const ownershipDetails = calculateOwnershipEstimate(
-    shnatYitzur,
-    firstReg,
-    activeRec.baalut || 'פרטי',
-    shinui.mkoriut_nm || activeRec.baalut || 'פרטי'
-  );
+  const ownershipDetails = {
+    currentCategory: normOwnership.currentOwnership,
+    originalHandOrigin: normOwnership.originalOwnership,
+    estimatedHandText: normOwnership.estimatedHandText,
+    estimatedHandMin: normOwnership.estimatedHandText.includes('1') ? 1 : 2,
+    estimatedHandMax: normOwnership.estimatedHandText.includes('3') ? 3 : 2,
+    estimatedHandExplanation: normOwnership.originalOwnershipDesc,
+    resalePriceImpact: normOwnership.priceReductionWarning || 'מקוריות פרטית: שומרת על מחירון מלא ומבוקשת בשוק המשומשות.',
+    howToVerifyDocument: [
+      'ברישיון הרכב המודפס המקורי: בדקו את סעיף "בעלים קודמים" (00 = יד 1, 01 = יד 2, 02 = יד 3, 03 = יד 4).',
+      'באזור האישי הממשלתי (Gov.il): בעל הרכב יכול להציג לכם את פירוט הבעלויות המלא והרשמי.'
+    ]
+  };
 
   // Calculate inspection months left
   let inspectionDueMonths = 0;
@@ -338,35 +359,31 @@ export async function fetchVehicleReport(
   let highwayL100: number | undefined;
   let combinedKmL: number | undefined;
 
-  const isElectric = /חשמל|electric/i.test(fuelType);
-  const isHybrid = /היברידי|hybrid/i.test(fuelType);
-  const isDiesel = /דיזל|diesel/i.test(fuelType);
+  const isElectric = normPowertrain.isElectric;
+  const isHybrid = normPowertrain.isHybrid;
+  const isDiesel = normPowertrain.isDiesel;
 
   if (!isElectric) {
     if (co2Wltp && co2Wltp > 0) {
-      const co2Factor = isDiesel ? 26.5 : 23.5;
+      const co2Factor = isDiesel ? 26.5 : (isHybrid ? 23.5 : 23.8);
       combinedL100 = parseFloat(((co2Wltp * 10) / (co2Factor * 10)).toFixed(1));
-    } else if (displacement > 0) {
-      if (isHybrid) {
-        combinedL100 = 4.7;
-      } else if (isDiesel) {
-        combinedL100 = 5.6;
-      } else if (displacement <= 1200) {
-        combinedL100 = 5.8;
-      } else if (displacement <= 1600) {
-        combinedL100 = 6.8;
-      } else if (displacement <= 2000) {
-        combinedL100 = 7.9;
-      } else {
-        combinedL100 = 9.8;
-      }
+    } else if (isHybrid) {
+      combinedL100 = 4.4;
+    } else if (isDiesel) {
+      combinedL100 = 5.5;
+    } else if (displacement <= 1200) {
+      combinedL100 = 5.8;
+    } else if (displacement <= 1600) {
+      combinedL100 = 6.6;
+    } else if (displacement <= 2000) {
+      combinedL100 = 7.7;
     } else {
-      combinedL100 = 6.9;
+      combinedL100 = 9.2;
     }
 
     if (combinedL100) {
       combinedKmL = parseFloat((100 / combinedL100).toFixed(1));
-      cityL100 = parseFloat((combinedL100 * (isHybrid ? 0.95 : 1.25)).toFixed(1));
+      cityL100 = parseFloat((combinedL100 * (isHybrid ? 0.90 : 1.25)).toFixed(1));
       highwayL100 = parseFloat((combinedL100 * (isHybrid ? 1.05 : 0.85)).toFixed(1));
     }
   }
@@ -415,8 +432,10 @@ export async function fetchVehicleReport(
     formattedPlate: formatPlateDisplay(cleanPlate),
     identity: {
       make,
+      englishMake,
       model,
       commercialName,
+      englishCommercialName,
       trimLevel,
       modelYear: shnatYitzur,
       firstRegistrationDate: firstReg,
@@ -430,8 +449,8 @@ export async function fetchVehicleReport(
       color: activeRec.tzeva_rechev || 'לא צוין',
       frontTire: activeRec.zmig_kidmi || 'לא צוין',
       rearTire: activeRec.zmig_ahori || 'לא צוין',
-      ownershipCategory: activeRec.baalut || 'פרטי',
-      countryOfOrigin: wltp.tozeret_eretz_nm,
+      ownershipCategory: normOwnership.currentOwnership,
+      countryOfOrigin,
       doorsCount: parseInt(wltp.mispar_dlatot, 10) || 5,
       seatsCount: parseInt(wltp.mispar_moshavim, 10) || 5,
       vinMasked: activeRec.misgeret ? `${activeRec.misgeret.slice(0, 3)}****${activeRec.misgeret.slice(-4)}` : undefined,
@@ -444,7 +463,7 @@ export async function fetchVehicleReport(
         horsepower,
         engineCode: activeRec.degem_manoa || 'לא צוין',
         fuelType,
-        driveTechnology: wltp.technologiat_hanaa_nm || (isElectric ? 'חשמלי מלא' : isHybrid ? 'היברידי' : 'הנעה רגילה'),
+        driveTechnology: normPowertrain.techDescription,
         timingType: intelligence.maintenance.timingType,
         turbocharged: Boolean(horsepower > 100 && displacement < 1600 && !isElectric)
       },

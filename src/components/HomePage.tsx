@@ -1,8 +1,26 @@
 import React, { useState } from 'react';
 import { 
-  ShieldCheck, Database, Wrench, Fuel, AlertTriangle, FileSpreadsheet, 
-  HelpCircle, ChevronDown, ChevronUp, CheckCircle2, ArrowLeft, Zap, Sparkles,
-  Users, MapPin, DollarSign, Check, Shield, Search, ShieldAlert
+  ShieldCheck, 
+  Database, 
+  Wrench, 
+  Fuel, 
+  AlertTriangle, 
+  FileSpreadsheet, 
+  HelpCircle, 
+  ChevronDown, 
+  ChevronUp, 
+  CheckCircle2, 
+  ArrowLeft, 
+  Users, 
+  MapPin, 
+  DollarSign, 
+  Check, 
+  Shield, 
+  Search, 
+  ShieldAlert,
+  Gauge,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { LicensePlateInput } from './LicensePlateInput';
 
@@ -18,99 +36,76 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
     setOpenFaq(openFaq === index ? null : index);
   };
 
-  const buyerValuePoints = [
+  const corePillars = [
     {
       icon: Users,
-      title: 'כמה ידיים עבר הרכב ומה מקוריותו?',
-      desc: 'אימות מקוריות ראשונה (פרטי, ליסינג או השכרה) והערכת מספר יד משוערת למניעת תשלום יתר על מחירון יד 2.'
+      title: 'מקוריות בעלות והשפעה על מחירון',
+      desc: 'אימות מקוריות ראשונה: פרטי, ליסינג (החכר) או השכרה. בדיקת ירידת ערך של 8% עד 22% לפי מחירון לוי יצחק.'
+    },
+    {
+      icon: Gauge,
+      title: 'הצלבת קילומטראז\' רשמי בטסט',
+      desc: 'חשיפת מד האוץ הממשלתי שנרשם במבחן הרישוי השנתי האחרון למניעת זיופי קילומטראז\' ותרמיות שעונים.'
     },
     {
       icon: ShieldAlert,
-      title: 'האם יש ריקול פתוח המונע טסט?',
-      desc: 'איתור ישיר ממאגר הגבלות משרד התחבורה: קריאת שירות שלא בוצעה חוסמת העברת בעלות וחידוש רישיון רכב!'
+      title: 'קריאות שירות (ריקול) שחוסמות טסט',
+      desc: 'איתור ישיר ממאגר ההגבלות של משרד התחבורה: ריקול בטיחותי שלא בוצע חוסם העברת בעלות וחידוש רישיון!'
     },
     {
-      icon: FileSpreadsheet,
-      title: 'זיהוי זיופי קילומטראז בטסט',
-      desc: 'הצלבת הקילומטראז האחרון שנרשם על ידי בוחן הרישוי הממשלתי מול מה שהמוכר מציג בלוח השעונים.'
-    },
-    {
-      icon: AlertTriangle,
-      title: 'מחלות דגם סמויות ועלויות תיקון',
-      desc: 'חשיפת כשלים ידועים במנוע, בגיר הרובוטי (DSG/DCT) או ברצועת הטיימינג, כדי שתדעו מראש מה עומד להתקלקל.'
-    },
-    {
-      icon: HelpCircle,
-      title: 'תסריט שאלות חובה למוכר',
-      desc: 'שאלות ממוקדות לדגם שחייבים לשאול את בעל הרכב בטלפון לפני ששורפים זמן וכסף על נסיעה ומכון בדיקה.'
-    },
-    {
-      icon: Shield,
-      title: 'בדיקת משכונות ושעבודים ממשלתית',
-      desc: 'קישורים ישירים לרשם המשכונות (משרד המשפטים) ולמרכז הסליקה של חברות הביטוח לגילוי תאונות וטוטאל-לוס.'
+      icon: FileText,
+      title: 'מפרט טכני מלא וצריכת דלק WLTP',
+      desc: 'נפח מנוע, כוחות סוס, סוג גיר, רמת אבזור בטיחות מקורית, צריכת דלק אמיתית ומחשבון הוצאות חודשיות.'
     }
-  ];
-
-  const geoAreas = [
-    { name: 'תל אביב וגוש דן', query: '42822302', desc: 'מרכז הסחר המוביל בישראל • דגש על בדיקת בלאי פקקים, שחיקת מצמדים עירונית וקילומטראז נמוך' },
-    { name: 'ירושלים ויהודה', query: '7943026', desc: 'דגש על בדיקת מאמץ מנוע וגיר בעליות לירושלים, תקינות בלמים ומערכת קירור' },
-    { name: 'חיפה והצפון', query: '84457801', desc: 'רכבי צפון והכרמל • בדיקת בלאי רפידות בלמים, התחממות במורדות וסחירות דגמים היברידיים' },
-    { name: 'ראשון לציון והשפלה', query: '36181801', desc: 'מרכזי הטרייד-אין והליסינג הגדולים • בדיקת מקוריות בעלות, רישום חברה ועבר טיפולים' },
-    { name: 'באר שבע והדרום', query: '71385104', desc: 'אקלים מדברי חם • בדיקת תקינות מזגן, קירור סוללה היברידית/חשמלית וצמיגים יבשים' },
-    { name: 'פתח תקווה והשרון', query: '1001160', desc: 'בדיקת רכבי משפחה, היסטוריית ריקולים פתוחים ואימות קילומטראז במכוני בדיקה מורשים' }
   ];
 
   const faqs = [
     {
-      q: 'איך האתר עוזר לי לקנות רכב יד שנייה בלי ליפול בפח?',
-      a: 'AutoScope Israel פותח במיוחד עבור קוני רכב יד שנייה. לפני שאתם נוסעים לראות את הרכב או משלמים מאות שקלים למכון בדיקה, המערכת מצליבה עבורכם את מסד הנתונים הממשלתי: בודקת אם הרכב היה במקור בליסינג או השכרה, מעריכה את מספר הידיים, מאתרת קילומטראז קודם בטסט, בודקת אם יש ריקול בטיחותי שמונע העברת בעלות, ומספקת לכם תסריט שאלות מדויק לדגם שחייבים לשאול את המוכר.'
+      q: 'מה המידע המוצג בדוח הרכב של AutoScope?',
+      a: 'הדוח מרכז נתוני אמת ממאגרי משרד התחבורה וה-WLTP: תוקף טסט, קילומטראז\' אחרון שנרשם במבחן הרישוי, סיווג בעלות נוכחי, מקוריות ראשונה (פרטי/ליסינג/השכרה), קריאות שירות (ריקול) פתוחות, מפרט טכני מלא וצריכת דלק.'
     },
     {
-      q: 'איך מחשבים את מספר היד של הרכב?',
-      a: 'משרד התחבורה מפרסם לציבור את סיווג הבעלות הנוכחי ואת מקוריות היד הראשונה (פרטי, ליסינג, השכרה, חברה). המערכת מחשבת הערכת מספר יד סטטיסטית מדויקת המבוססת על שנתון הרכב (לפי ממוצע החלפת בעלות של 3.5 שנים בישראל) ומסבירה כיצד לוודא את הנתון הסופי והרשמי בסעיף "בעלים קודמים" ברישיון הרכב המודפס או באזור האישי הממשלתי.'
+      q: 'מדוע חשוב לבדוק מקוריות רכב לפני קנייה?',
+      a: 'רכבים שעלו לכביש ברישום ראשון של ליסינג או השכרה זכאים להפחתה משמעותית במחיר המחירון (8%–22% לפי מחירון לוי יצחק). מוכרים רבים אינם מציינים זאת במודעה, והדוח חושף את המקוריות הרשמית.'
     },
     {
-      q: 'מה קורה אם בחיפוש הבא הרכב עבר טסט או החליף בעלות?',
-      a: 'המערכת מיישמת מנגנון רענון חכם (Stale-While-Revalidate). כל דוח כולל חותמת תאריך ושעת עדכון וכפתור "רענן נתונים כעת". אם עברו מעל 7 ימים מהבדיקה הקודמת או אם תאריך הטסט חלף, המערכת פונה מיד למאגרי משרד התחבורה ומעדכנת את הדוח לנתונים הטריים ביותר של אותה שנייה.'
+      q: 'האם משרד התחבורה מפרסם את מספר היד המדויק?',
+      a: 'לפי חוק הגנת הפרטיות, מאגר המידע הממשלתי הפתוח מפרסם את מקוריות הרכב והבעלות הנוכחית, אך לא את מספר הידיים המלא. האתר מספק הערכה סטטיסטית אמינה לפי גיל הרכב ומקוריותו, ומסביר כיצד לאמת את היד המדויקת ברישיון הרכב המודפס (סעיף "בעלים קודמים").'
     },
     {
-      q: 'האם האתר עולה כסף?',
-      a: 'לא, השירות חינמי לגמרי לציבור הרחב ללא צורך בהרשמה או מסירת פרטים אישיים. אנו פועלים לקידום שקיפות ובטיחות בענף הרכב בישראל.'
+      q: 'האם השירות כרוך בתשלום או בהרשמה?',
+      a: 'לא. השירות פתוח לציבור ללא תשלום, ללא צורך בהרשמה וללא איסוף פרטים אישיים, במטרה לקדם שקיפות והגינות בשוק הרכב המשומש בישראל.'
     },
     {
       q: 'האם הדוח מחליף בדיקה פיזית במכון בדיקה מורשה?',
-      a: 'לא. הדוח מספק מודיעין רישוי, היסטוריית ק"מ ומחלות דגם סמויות, אך אינו בודק את מצב השלדה (שאסי), תאונות פיזיות או בלאי מנוע של הרכב הספציפי. לפני קנייה חובה לגשת למכון בדיקה מורשה ולבדוק משכונות ברשם המשכונות.'
+      a: 'לא. הדוח מעניק מודיעין רישוי, היסטוריה ומפרט טכני. לפני רכישת רכב יד שנייה חובה לבצע בדיקה פיזית של שלדה (שאסי) ומכלולים מכניים במכון מורשה, ולבדוק משכונות ברשם המשכונות.'
     }
   ];
 
   return (
-    <div>
+    <div className="bg-slate-50 text-slate-900" dir="rtl">
       
-      {/* Hero Section with Custom Illustration Banner */}
-      <section className="relative overflow-hidden pt-10 pb-16 sm:pt-14 sm:pb-24 bg-gradient-to-b from-white via-brand-50/25 to-slate-50 border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      {/* Clean, Modern Hero Section */}
+      <section className="relative pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-slate-200/80 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           
-          <div className="text-center max-w-3xl mx-auto">
-            {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2 bg-brand-100 text-brand-800 text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full mb-6 border border-brand-200 shadow-sm animate-fade-in">
-              <Sparkles className="w-4 h-4 text-brand-600" />
-              <span>מודיעין רכב לקוני יד 2 • נתונים מאומתים ממשרד התחבורה ומאגר ה-WLTP</span>
-            </div>
-
-            {/* Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-tight sm:leading-tight mb-4">
-              בדיקת רכב לפני קנייה.<br />
-              <span className="text-brand-600">אל תקנו רכב בלי לדעת הכל.</span>
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed font-normal">
-              הכניסו מספר רישוי וקבלו דוח מקיף: אימות מקוריות ויד, קילומטראז בטסט, ריקולים שחוסמים טסט, מחלות דגם סמויות ותסריט שאלות למוכר.
-            </p>
+          {/* Official Connection Badge */}
+          <div className="inline-flex items-center gap-2 bg-slate-100 text-slate-800 text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full mb-6 border border-slate-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>מחובר ישירות למאגרי משרד התחבורה • data.gov.il</span>
           </div>
 
-          {/* Main License Plate Input */}
-          <div className="mb-10">
+          {/* Clean Editorial Headline */}
+          <h1 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight sm:leading-tight mb-4">
+            בדיקת רכב לפי מספר רישוי
+          </h1>
+          
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
+            הכניסו מספר רכב וקבלו תיק רכב רשמי: אימות מקוריות ויד, קילומטראז' בטסט האחרון, ריקולים פתוחים ומפרט טכני מלא.
+          </p>
+
+          {/* Israeli License Plate Search Box */}
+          <div className="max-w-xl mx-auto mb-8">
             <LicensePlateInput 
               onSearch={onSearch}
               isLoading={isLoading}
@@ -118,139 +113,55 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
             />
           </div>
 
-          {/* Generated Hero Automotive Banner Visual */}
-          <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden border border-slate-200 shadow-2xl group">
-            <img 
-              src="/hero-car.jpg" 
-              alt="AutoScope Israel - סריקת מודיעין רכב ממוחשבת" 
-              className="w-full h-auto object-cover max-h-[380px] transform group-hover:scale-[1.01] transition-transform duration-500"
-              loading="eager"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 w-full text-white text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-bold">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>סריקה רב-מערכתית בזמן אמת מול שרתי משרד התחבורה data.gov.il</span>
-                </div>
-                <div className="hidden sm:flex items-center gap-4 text-slate-300 text-xs">
-                  <span>אימות מקוריות בעלות</span>
-                  <span>•</span>
-                  <span>קילומטראז בטסט אחרון</span>
-                  <span>•</span>
-                  <span>חסימת ריקולים</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trust Signals */}
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm font-medium text-slate-600 mt-8 pt-4 max-w-2xl mx-auto">
+          {/* Quick Trust Checks */}
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs sm:text-sm text-slate-600 font-medium">
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
+              <span>נתוני אמת ממשלתיים (ללא ניחושים)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
               <span>חינם לחלוטין וללא הרשמה</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>נתוני אמת ממאגרי הממשלה</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>תמיכה מלאה בכל רכב ישראלי</span>
+              <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
+              <span>סריקת ריקולים מעכבי רישיון</span>
             </div>
           </div>
 
         </div>
       </section>
 
-      {/* Second Hand Buyer Core Values */}
-      <section className="py-16 sm:py-20 bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 4 Professional Feature Pillars */}
+      <section className="py-16 sm:py-20 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">מודיעין לפני רכישה</div>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              6 דברים שחייבים לבדוק לפני שמעבירים כסף למוכר
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 mt-2">
-              בדיקת רכב מקצועית מתחילה במספר הרישוי. גלו את המידע שהמוכרים לא תמיד ששים לשתף.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {buyerValuePoints.map((feat, idx) => {
-              const Icon = feat.icon;
-              return (
-                <div 
-                  key={idx}
-                  className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-brand-500 hover:shadow-xl transition-all duration-200 group flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="w-12 h-12 rounded-xl bg-brand-50 group-hover:bg-brand-600 text-brand-600 group-hover:text-white flex items-center justify-center transition-colors mb-4">
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">
-                      {feat.title}
-                    </h3>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {feat.desc}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center text-xs font-bold text-brand-600 group-hover:translate-x-[-3px] transition-transform">
-                    <span>מופיע בדוח הרכב המלא ←</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
-      {/* Local Israeli GEO Buyer Hubs (SEO & GEO) */}
-      <section className="py-16 bg-slate-50 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-1.5 text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">
-              <MapPin className="w-4 h-4" />
-              <span>מודיעין רכב מקומי בישראל</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              מדריכי בדיקת רכב לפני קנייה לפי אזור וערים בארץ
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+              כל מה שחשוב לדעת לפני שקונים רכב
             </h2>
             <p className="text-sm text-slate-600 mt-2">
-              לכל אזור בישראל יש מאפייני בלאי ייחודיים ומכוני בדיקה מורשים
+              המידע הקריטי שיעזור לכם לקבל החלטה מושכלת ולא ליפול בפח
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {geoAreas.map((geo, idx) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {corePillars.map((pillar, i) => (
               <div 
-                key={idx}
-                className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-brand-400 hover:shadow-md transition-all flex flex-col justify-between"
+                key={i}
+                className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow flex items-start gap-4"
               >
+                <div className="w-12 h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-700 shrink-0">
+                  <pillar.icon className="w-6 h-6 stroke-[2]" />
+                </div>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-slate-900 text-base flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-brand-600" />
-                      <span>{geo.name}</span>
-                    </h3>
-                    <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">מדריך מקומי</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                    {geo.desc}
+                  <h3 className="font-bold text-base text-slate-900 mb-1.5">
+                    {pillar.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {pillar.desc}
                   </p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => onSearch(geo.query)}
-                  className="w-full py-2 bg-slate-50 hover:bg-brand-50 text-brand-700 border border-slate-200 hover:border-brand-300 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>בדיקת רכב לדוגמה מאזור זה</span>
-                </button>
               </div>
             ))}
           </div>
@@ -258,43 +169,88 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-16 sm:py-20 bg-white border-b border-slate-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      {/* Mandatory Official Registries Links */}
+      <section className="py-12 bg-white border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              שאלות ותשובות לקוני רכב יד שנייה
+          <div className="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 text-amber-400 text-xs font-bold mb-2">
+                <Shield className="w-3.5 h-3.5" />
+                <span>המלצת חובה לרוכשי יד שנייה</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black">
+                שתי הבדיקות המשפטיות שחייבים לבצע לפני העברת כספים
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                רכב עלול להיות משועבד לבנק או לעבור תאונת "טוטאל-לוס" שאינה מופיעה ברישיון הרכב. בצעו בדיקה רשמית במאגרים הממשלתיים:
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+              <a 
+                href="https://ica.justice.gov.il/Request/OpenServicesList?Unit=mashkonot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs shadow-md transition-colors"
+              >
+                <span>רשם המשכונות (₪10)</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+              </a>
+              <a 
+                href="https://slika-ins.co.il"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-colors"
+              >
+                <span>מרכז הסליקה (₪10)</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 sm:py-20 bg-slate-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+              שאלות נפוצות על בדיקת רכב
             </h2>
-            <p className="text-sm text-slate-500 mt-2">
-              כל מה שחשוב לדעת על הפקת דוח רכב ובדיקת מספר רישוי
+            <p className="text-xs sm:text-sm text-slate-500 mt-2">
+              מידע שימושי על מאגרי הרישוי, בדיקות לפני קנייה והסדרי בעלות
             </p>
           </div>
 
-          <div className="space-y-4">
-            {faqs.map((faq, index) => {
-              const isOpen = openFaq === index;
-              return (
-                <div 
-                  key={index}
-                  className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50 transition-all"
+          <div className="space-y-3">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index}
+                className="bg-white rounded-xl border border-slate-200 overflow-hidden transition-all shadow-sm"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleFaq(index)}
+                  className="w-full py-4 px-5 text-right flex items-center justify-between gap-4 font-bold text-sm text-slate-900 hover:text-brand-700 transition-colors"
                 >
-                  <button
-                    onClick={() => toggleFaq(index)}
-                    className="w-full p-4 sm:p-5 text-right flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-brand-600 transition-colors"
-                  >
-                    <span className="text-sm sm:text-base">{faq.q}</span>
-                    {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />}
-                  </button>
-
-                  {isOpen && (
-                    <div className="p-4 sm:p-5 pt-0 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/60 bg-white">
-                      {faq.a}
-                    </div>
+                  <span>{faq.q}</span>
+                  {openFaq === index ? (
+                    <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
                   )}
-                </div>
-              );
-            })}
+                </button>
+
+                {openFaq === index && (
+                  <div className="px-5 pb-4 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
         </div>

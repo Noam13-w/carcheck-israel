@@ -55,8 +55,10 @@ export interface VehicleReportData {
   // Section A: Vehicle Identity & Ownership / Hand details
   identity: {
     make: string;
+    englishMake?: string;
     model: string;
     commercialName: string;
+    englishCommercialName?: string;
     trimLevel: string;
     modelYear: number;
     firstRegistrationDate: string;
