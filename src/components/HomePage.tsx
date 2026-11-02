@@ -300,50 +300,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-950 text-slate-400 py-12 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800 text-center md:text-right">
-            <div>
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <ShieldCheck className="w-5 h-5 text-brand-400" />
-                <span className="font-extrabold text-base text-white">AutoScope Israel</span>
-              </div>
-              <p className="text-slate-400 max-w-md">
-                פלטפורמת מודיעין רכב מתקדמת לקוני רכב יד שנייה בישראל, מבוססת נתוני משרד התחבורה.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-              <a href="https://data.gov.il" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                מאגר data.gov.il
-              </a>
-              <span>•</span>
-              <a href="https://www.gov.il/he/departments/ministry_of_transport_and_road_safety" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                משרד התחבורה
-              </a>
-              <span>•</span>
-              <a href="https://ica.justice.gov.il/Request/OpenServicesList?Unit=mashkonot" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                רשם המשכונות (בדיקת שעבוד)
-              </a>
-              <span>•</span>
-              <a href="https://slika-ins.co.il" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                מרכז הסליקה (עבר ביטוחי)
-              </a>
-            </div>
-          </div>
-
-          <div className="pt-8 text-center text-slate-500 space-y-2">
-            <p>
-              המידע באתר מבוסס על מאגרי מידע ומקורות ציבוריים ממשלתיים בישראל. השימוש במידע באחריות המשתמש בלבד ואינו מהווה תחליף לבדיקה מקצועית לפני רכישה.
-            </p>
-            <p>© {new Date().getFullYear()} AutoScope Israel. כל הזכויות שמורות.</p>
-          </div>
-
-        </div>
-      </footer>
-
     </div>
   );
 };

@@ -55,13 +55,17 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
 
   return (
     <div className="w-full max-w-xl mx-auto">
-      <form onSubmit={handleSubmit} className="relative">
+      <form onSubmit={handleSubmit} className="relative" role="search" aria-label="חיפוש רכב לפי מספר רישוי">
         
+        <label htmlFor="license-plate-input" className="sr-only">
+          הזנת מספר רישוי ישראלי לבדיקה (7 או 8 ספרות)
+        </label>
+
         {/* Israeli Plate Container */}
-        <div className={`relative flex items-center bg-[#f9d616] rounded-xl border-4 border-slate-900 shadow-xl overflow-hidden transition-all focus-within:ring-4 focus-within:ring-brand-500/30 ${size === 'large' ? 'h-20 sm:h-24' : 'h-16'}`}>
+        <div className={`relative flex items-center bg-[#f9d616] rounded-xl border-4 border-slate-900 shadow-xl overflow-hidden transition-all focus-within:ring-4 focus-within:ring-brand-500/40 ${size === 'large' ? 'h-20 sm:h-24' : 'h-16'}`}>
           
           {/* Blue IL Flag Strip */}
-          <div className="h-full w-14 sm:w-16 bg-[#0038b8] text-white flex flex-col items-center justify-between py-2 sm:py-2.5 px-1 select-none shrink-0 border-l-2 border-slate-900/20">
+          <div className="h-full w-14 sm:w-16 bg-[#0038b8] text-white flex flex-col items-center justify-between py-2 sm:py-2.5 px-1 select-none shrink-0 border-l-2 border-slate-900/20" aria-hidden="true">
             <div className="text-[10px] sm:text-xs font-bold leading-none tracking-widest text-center">
               <div>ישראל</div>
               <div className="text-[9px] opacity-80">إسرائيل</div>
@@ -78,6 +82,7 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
           {/* Plate Number Input */}
           <div className="relative flex-1 flex items-center px-4">
             <input
+              id="license-plate-input"
               type="text"
               inputMode="numeric"
               autoComplete="off"
@@ -86,6 +91,10 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
               onChange={handleInputChange}
               placeholder="12-345-67"
               disabled={isLoading}
+              aria-label="מספר רישוי ישראלי"
+              aria-required="true"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "plate-error-msg" : undefined}
               className={`w-full bg-transparent text-slate-950 font-black tracking-widest text-center focus:outline-none placeholder:text-slate-800/40 select-all font-mono ${
                 size === 'large' ? 'text-3xl sm:text-5xl' : 'text-2xl sm:text-3xl'
               }`}
@@ -95,7 +104,8 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
               <button
                 type="button"
                 onClick={() => setValue('')}
-                className="absolute left-3 text-slate-700 hover:text-slate-900 p-1.5 rounded-full hover:bg-black/10 transition-colors"
+                className="absolute left-3 text-slate-700 hover:text-slate-900 p-1.5 rounded-full hover:bg-black/10 transition-colors focus:ring-2 focus:ring-slate-900"
+                aria-label="נקה מספר רישוי"
                 title="נקה מספר"
               >
                 <X className="w-5 h-5" />
@@ -110,7 +120,8 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
           <button
             type="submit"
             disabled={isLoading || !value}
-            className="flex-1 h-14 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 disabled:bg-slate-300 text-white font-bold text-lg rounded-xl shadow-lg shadow-brand-600/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+            aria-label="בדיקת רכב והפקת דוח מקיף"
+            className="flex-1 h-14 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 disabled:bg-slate-300 text-white font-bold text-lg rounded-xl shadow-lg shadow-brand-600/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-brand-400"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
@@ -128,7 +139,7 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
         </div>
 
         {error && (
-          <p className="mt-2 text-center text-sm font-semibold text-rose-600 animate-shake">
+          <p id="plate-error-msg" role="alert" className="mt-2 text-center text-sm font-semibold text-rose-600 animate-shake">
             {error}
           </p>
         )}
