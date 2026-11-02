@@ -5,6 +5,8 @@ interface ModelProfile {
   modelMatch?: RegExp;
   engineMatch?: RegExp;
   fuelMatch?: RegExp;
+  modelSlug: string;
+  modelHubTitle: string;
   problems: KnownProblem[];
   maintenance: {
     recommendedOilSpec: string;
@@ -29,6 +31,11 @@ interface ModelProfile {
     top5Considerations: string[];
     bottomLine: string;
   };
+  specificSellerQuestions?: {
+    question: string;
+    reason: string;
+    watchOutFor: string;
+  }[];
 }
 
 export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
@@ -36,6 +43,8 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
   {
     makeMatch: /סקודה|פולקסווגן|סיאט|אאודי|אודי|skoda|volkswagen|seat|audi/i,
     modelMatch: /אוקטביה|סופרב|קודיאק|קארוק|גולף|פולו|טיגואן|פאסאט|איביזה|לאון|ארונה|אטקה|octavia|superb|kodiaq|golf|ibiza|leon/i,
+    modelSlug: 'skoda-vw-seat-dsg',
+    modelHubTitle: 'מדריך קנייה לקבוצת פולקסווגן, סקודה וסיאט (TSI / DSG)',
     problems: [
       {
         id: 'vag-dsg-dq200',
@@ -87,6 +96,18 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
         sources: [{ name: 'Euro Car Magazine UK', date: '2023' }]
       }
     ],
+    specificSellerQuestions: [
+      {
+        question: 'האם המצמדים או מוח הגיר (מכטרוניק) הוחלפו או שופצו בעבר, ובאיזה קילומטראז?',
+        reason: 'תיבת DSG DQ200 דורשת החלפת מצמדים כל 80,000–120,000 ק"מ. החלפה קודמת חוסכת לקונה כ-₪4,500.',
+        watchOutFor: 'אם המוכר טוען שהגיר "מקורי ולא נגעו בו" ברכב עם 130k ק"מ, צפו להחלפה קרובה.'
+      },
+      {
+        question: 'האם הרכב צורך נוזל קירור בין טיפולים או האם הוחלפה משאבת מים ותרמוסטט?',
+        reason: 'בית משאבת המים והתרמוסטט עשוי מפלסטיק ונוטה להיסדק. מחירו כ-₪2,500.',
+        watchOutFor: 'סימני אבקה ורודה/לבנה מתחת לבית התרמוסטט או מפלס נוזל קירור נמוך במיכל העיבוי.'
+      }
+    ],
     maintenance: {
       recommendedOilSpec: '5W-30 או 0W-20 בתקן רשמי VW 504.00 / 507.00 / 508.00',
       oilCapacityLiters: 4.3,
@@ -130,6 +151,8 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
     makeMatch: /טויוטה|toyota|לקסוס|lexus/i,
     modelMatch: /קורולה|יאריס|ראב|chr|c-hr|פריוס|פריוס פלוס|קאמרי|corolla|yaris|rav4|prius|camry/i,
     fuelMatch: /היברידי|חשמל\/בנזין|בנזין/i,
+    modelSlug: 'toyota-hybrid',
+    modelHubTitle: 'מדריך קנייה לרכבי טויוטה היברידיים (קורולה, ראב4, יאריס)',
     problems: [
       {
         id: 'toyota-inverter-cooling',
@@ -176,6 +199,18 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
         sources: [{ name: 'Toyota Owners Guild', date: '2022' }]
       }
     ],
+    specificSellerQuestions: [
+      {
+        question: 'האם קיימת תעודת אחריות מורחבת בתוקף לסוללה ההיברידית ממוסך טויוטה רשמי?',
+        reason: 'טויוטה מאפשרת הארכת אחריות לסוללה עד גיל 10-12 שנים בבדיקה שנתית בעלות של כ-₪350. קיומה מעניק שקט נפשי מלא מפני כשל סוללה שעלותו מעל ₪9,000.',
+        watchOutFor: 'אם בעל הרכב הפסיק לחדש את ביטוח הסוללה, ייתכן שקיבל התרעה על תאים חלשים.'
+      },
+      {
+        question: 'האם פתח יניקת האוויר של הסוללה במושב האחורי נוקה באופן סדיר?',
+        reason: 'סתימת המאוורר גורמת להתחממות הסוללה ההיברידית ומקצרת משמעותית את אורך חייה.',
+        watchOutFor: 'לכלוך, שערות בעלי חיים או חסימה מוחלטת של רשת היניקה בצידי המושב האחורי.'
+      }
+    ],
     maintenance: {
       recommendedOilSpec: '0W-16 או 0W-20 בתקן API SP / ILSAC GF-6B סינטטי מלא בלבד',
       oilCapacityLiters: 4.2,
@@ -218,6 +253,8 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
   {
     makeMatch: /יונדאי|קיה|hyundai|kia/i,
     modelMatch: /איוניק|טוסון|ספורטאז|i10|i20|i30|פיקנטו|נירו|קונה|סטוניק|סורנטו|ioniq|tucson|sportage|picanto|niro|kona/i,
+    modelSlug: 'hyundai-kia',
+    modelHubTitle: 'מדריך קנייה לרכבי יונדאי וקיה יד שנייה (איוניק, נירו, ספורטאז, טוסון)',
     problems: [
       {
         id: 'hyundai-dct-dry-wear',
@@ -247,21 +284,18 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
         isRecurring: false,
         hasRecallOrTsb: true,
         sources: [{ name: 'Hyundai TSB 14-ST-002-1', date: '2018' }]
+      }
+    ],
+    specificSellerQuestions: [
+      {
+        question: 'האם המצמדים בגיר הוחלפו בעבר, והאם מורגשות רעידות ביציאה מהמקום?',
+        reason: 'החלפת מצמדים בגיר DCT עולה כ-₪4,500. חיוני לדעת אם הוחלפו ומתי.',
+        watchOutFor: 'רעידה קלה בתחילת נסיעה או השהיה בלחיצה על הגז ביציאה מרמזור.'
       },
       {
-        id: 'hyundai-engine-oil-consumption',
-        name: 'צריכת שמן מנוע במנועי GDI ו-Nu 2.0',
-        category: 'engine',
-        description: 'בחלק ממנועי הבנזין בהזרקה ישירה (GDI) קיימת נטייה להצטברות פיח על טבעות הבוכנה ושסתומי היניקה, המובילה לעלייה בצריכת השמן.',
-        affectedYears: '2014–2020',
-        affectedEngines: '1.6 GDI, 2.0 Nu',
-        symptoms: ['צריכת שמן בין טיפולים', 'הצטברות פיח באגזוז'],
-        possibleCauses: ['סתימת חרירי שמן בטבעות הבוכנה'],
-        severity: 'medium',
-        estimatedCostIls: { min: 500, max: 2000 },
-        isRecurring: false,
-        hasRecallOrTsb: false,
-        sources: [{ name: 'Consumer Reports Automotive', date: '2022' }]
+        question: 'בדגמי איוניק/נירו: האם הוחלף נוזל מפעיל מצמדים היברידי במוסך מורשה?',
+        reason: 'הנוזל ההידראולי של מפעיל המצמדים דורש החלפה כל שנתיים / 30,000 ק"מ. הזנחתו גורמת לשריפת מפעיל.',
+        watchOutFor: 'היסטוריית טיפולים ללא שורת "החלפת שמן מפעיל היברידי".'
       }
     ],
     maintenance: {
@@ -299,239 +333,278 @@ export const MODEL_KNOWLEDGE_BASE: ModelProfile[] = [
       ],
       bottomLine: 'אחת המשפחתיות והרכבים הנמכרים והפרקטיים בישראל, עסקה מצוינת בשוק המשומשות כפוף לבדיקת גיר קפדנית.'
     }
-  },
-
-  // 4. Stellantis (Peugeot, Citroen, Opel) - PureTech 1.2 & BlueHDi
-  {
-    makeMatch: /פיג'ו|פיגו|פז'ו|סיטרואן|אופל|peugeot|citroen|opel/i,
-    modelMatch: /208|308|2008|3008|5008|c3|c4|c5|קורסה|גרנדלנד|corsa|grandland/i,
-    problems: [
-      {
-        id: 'psa-puretech-belt',
-        name: 'התפוררות רצועת תזמון טבולה בשמן (1.2 PureTech)',
-        category: 'engine',
-        description: 'רצועת התזמון במנועי 1.2 PureTech פועלת בתוך אמבט שמן מנוע. אדי דלק וחומציות שמן גורמים להתפוררות גומי הרצועה. השבבים סותמים את רשתית משאבת השמן ומשאבת הוואקום של הבלמים, מה שעלול להוביל לאובדן כוח בלימה והרס מנוע.',
-        affectedYears: '2014–2022',
-        affectedEngines: '1.2 PureTech 110hp / 130hp (EB2DT / EB2DTS)',
-        symptoms: ['נורית לחץ שמן נדלקת בעומס', 'דוושת בלם קשה (ירידה בעוצמת התגבור)', 'שבבי גומי שחורים על מדיד השמן או בפילטר'],
-        possibleCauses: ['התיישנות גומי הרצועה במגע עם שמן מנוע ודלק'],
-        severity: 'critical',
-        estimatedCostIls: { min: 2800, max: 5500, description: 'החלפת רצועה משודרגת, פירוק קרטר וניקוי רשתית משאבת השמן. (חלקית באחריות יבואן מורחבת)' },
-        isRecurring: true,
-        hasRecallOrTsb: true,
-        recallCode: 'קמפיין שירות עולמי HNZ / JZR משרד התחבורה ישראל',
-        sources: [
-          { name: 'קריאת שירות משרד התחבורה ישראל לובינסקי', date: '2021' },
-          { name: 'L\'Argus France Automobile', date: '2023' }
-        ]
-      },
-      {
-        id: 'psa-bluehdi-adblue',
-        name: 'תקלות במכל ומערכת האוריאה (AdBlue) בדגמי דיזל',
-        category: 'engine',
-        description: 'משאבת האוריאה המשולבת בתוך מכל ה-AdBlue נוטה להתקלקל עקב התגבשות נוזל האוריאה, ומצריכה החלפת כל המכל.',
-        affectedYears: '2015–2021',
-        affectedEngines: '1.5 / 1.6 / 2.0 BlueHDi',
-        symptoms: ['הודעת "Emissions fault: starting prevented in 1100 km"', 'נורית UREA מהבהבת'],
-        possibleCauses: ['התגבשות אוריאה וסתימת המשאבה הפנימית'],
-        severity: 'high',
-        estimatedCostIls: { min: 3500, max: 5800, description: 'החלפת מכל אוריאה קומפלט' },
-        isRecurring: true,
-        hasRecallOrTsb: true,
-        sources: [{ name: 'לובינסקי שירות לקוחות', date: '2022' }]
-      }
-    ],
-    maintenance: {
-      recommendedOilSpec: '0W-20 או 0W-30 בתקן ייעודי מחמיר PSA B71 2010 / B71 2312 בלבד!',
-      oilCapacityLiters: 3.5,
-      timingType: 'רצועת תזמון (טיימינג)',
-      timingNotes: 'מרווח החלפה מקוצר בישראל למנועי PureTech: כל 60,000 ק"מ או 4 שנים בלבד (ולא 100k כמצוין בספר הרכב המקורי).',
-      schedule: [
-        { item: 'החלפת שמן מנוע בתקן PSA בלבד ובדיקת רוחב רצועת טיימינג עם מד ייעודי', intervalKm: 15000, intervalMonths: 12, importance: 'critical', notes: 'אסור בתכלית האיסור למלא שמן ללא התקן המדויק של היצרן' },
-        { item: 'החלפת רצועת תזמון ופירוק קרטר לניקוי רשתית שמן', intervalKm: 60000, intervalMonths: 48, importance: 'critical' },
-        { item: 'החלפת שמן גיר אוטומטי Aisin EAT6/EAT8', intervalKm: 60000, intervalMonths: 48, importance: 'recommended' },
-        { item: 'החלפת מצתים ייעודיים', intervalKm: 40000, intervalMonths: 36, importance: 'critical' }
-      ]
-    },
-    reliability: {
-      engineRating: 3.2,
-      transmissionRating: 4.8,
-      electricalRating: 3.9,
-      suspensionRating: 4.7,
-      overallScore: 3.7,
-      partsAvailabilityInIsrael: 'גבוהה',
-      maintenanceComplexity: 'מורכבת',
-      summaryHebrew: 'דגמי פיג\'ו וסיטרואן מצטיינים בנוחות נסיעה עילאית, עיצוב מרשים, בטיחות מצוינת ותיבות הילוכים אוטומטיות יפניות מעולות (Aisin EAT8). יחד עם זאת, מנוע ה-1.2 PureTech דורש הקפדה יתרה על שמן ייעודי ובדיקה מתמדת של רצועת הטיימינג הטבולה.'
-    },
-    verdict: {
-      pros: ['נוחות נסיעה ושיכוך מהמורות המובילים בקטגוריה', 'גיר אוטומטי פלנטרי יפני Aisin אמין וחלק במיוחד', 'תא נוסעים מעוצב ואיכות חומרים גבוהה', 'מחיר רכישה אטרקטיבי כמשומש'],
-      cons: ['רגישות קריטית של רצועת הטיימינג במנועי 1.2 PureTech', 'ירידת ערך מהירה יותר מרכבים יפניים', 'תקלות במערכת האוריאה AdBlue בדגמי דיזל'],
-      top5Considerations: [
-        'בדיקה קריטית של רצועת הטיימינג: מדדו את רוחבה דרך פתח מילוי השמן עם המד המיוחד.',
-        'ודאו מתי הוחלפה רצועת הטיימינג לאחרונה ואם בוצע ניקוי רשתית משאבת שמן.',
-        'בדקו האם הרכב זכאי לאחריות המורחבת של היבואן (לובינסקי) עד 10 שנים למנוע.',
-        'בדקו האם מולא שמן בתקן PSA המדויק בלבד בכל הטיפולים.',
-        'ברכבי דיזל: בדקו שאין תקלות או התראות במערכת ה-AdBlue.'
-      ],
-      bottomLine: 'רכב נוח ומפנק עם גיר יפני מצוין, אך קנייתו כמשומש מחייבת בדיקת מנוע וטיימינג מקצועית ללא פשרות.'
-    }
-  },
-
-  // 5. Mazda (Mazda 2, 3, 6, CX-3, CX-5, CX-30)
-  {
-    makeMatch: /מאזדה|mazda/i,
-    modelMatch: /2|3|6|cx|cx-3|cx-5|cx-30|cx-9/i,
-    problems: [
-      {
-        id: 'mazda-ghost-touch',
-        name: 'לחיצות רפאים (Ghost Touch) במסך מולטימדיה MZD Connect',
-        category: 'electrical',
-        description: 'התפרקות שכבת המגע במסך המרכזי גורמת לפקודות שווא וקפיצות בין תחנות רדיו או תפריטים בעיקר בחום השמש הישראלית.',
-        affectedYears: '2014–2019',
-        symptoms: ['המסך פותח תפריטים לבד בעצירה', 'ביפים מרובים ממערכת השמע'],
-        possibleCauses: ['דה-למינציה של שכבת הדיגיטייזר מחום'],
-        severity: 'low',
-        estimatedCostIls: { min: 450, max: 1200, description: 'החלפת דיגיטייזר בלבד או נטרול מגע' },
-        isRecurring: true,
-        hasRecallOrTsb: true,
-        sources: [{ name: 'Mazda North American Operations TSB', date: '2019' }]
-      },
-      {
-        id: 'mazda-lower-control-arm',
-        name: 'בלאי תותבי (בוקסות) משולשים קדמיים',
-        category: 'suspension',
-        description: 'תותבי הגומי האחוריים של המשולשים הקדמיים נוטים להיקרע לאחר כ-80,000–100,000 ק"מ בכבישי ישראל.',
-        affectedYears: '2013–2021',
-        symptoms: ['חבטה קלה בבלימה חזקה', 'שחיקת צמיגים לא אחידה'],
-        possibleCauses: ['בלאי גומי טבעי ממשקל הרכב ופסי האטה'],
-        severity: 'medium',
-        estimatedCostIls: { min: 900, max: 1800, description: 'החלפת זוג משולשים/בוקסות + כיוון פרונט' },
-        isRecurring: false,
-        hasRecallOrTsb: false,
-        sources: [{ name: 'מועדון מאזדה ישראל', date: '2023' }]
-      }
-    ],
-    maintenance: {
-      recommendedOilSpec: '0W-20 או 5W-30 בתקן API SP / ILSAC GF-6',
-      oilCapacityLiters: 4.2,
-      timingType: 'שרשרת תזמון',
-      timingNotes: 'מצויד בשרשרת תזמון אמינה לכל חיי הרכב.',
-      schedule: [
-        { item: 'החלפת שמן מנוע ומסנן שמן מקורי', intervalKm: 15000, intervalMonths: 12, importance: 'critical' },
-        { item: 'החלפת מסנני אוויר ומזגן', intervalKm: 30000, intervalMonths: 24, importance: 'recommended' },
-        { item: 'החלפת מצתי אירידיום מקוריים Denso/NGK', intervalKm: 90000, intervalMonths: 72, importance: 'critical' },
-        { item: 'החלפת שמן גיר אוטומטי מקורי Mazda FZ', intervalKm: 90000, intervalMonths: 72, importance: 'recommended', notes: 'מומלץ להחלפה יזומה לשמירה על אורך חיי הגיר' }
-      ]
-    },
-    reliability: {
-      engineRating: 4.8,
-      transmissionRating: 4.9,
-      electricalRating: 4.6,
-      suspensionRating: 4.5,
-      overallScore: 4.7,
-      partsAvailabilityInIsrael: 'גבוהה מאוד',
-      maintenanceComplexity: 'פשוטה',
-      summaryHebrew: 'מאזדה היא מהיצרניות האמינות ביותר בישראל. שילוב מנועי ה-SkyActiv האטמוספריים עם תיבת ה-6 הילוכים הפלנטרית מעניק אמינות כמעט מוחלטת לאורך שנים עם מינימום תקלות.'
-    },
-    verdict: {
-      pros: ['אמינות מכנית פנומנלית של מנוע וגיר', 'איכות הרכבה וחומרים גבוהה מאוד', 'התנהגות כביש מהנה ומדויקת', 'סחירות ושמירת ערך גבוהה בשוק הישראלי'],
-      cons: ['צריכת דלק מעט גבוהה יותר מהיברידיות וטורבו קטנות', 'מרווח רגליים אחורי ותא מטען מעט צפופים ביחס למתחרות', 'נוחות נסיעה מעט נוקשה על שיבושים'],
-      top5Considerations: [
-        'בדיקת תקינות מסך המולטימדיה (היעדר "לחיצות רפאים" בחום).',
-        'בדיקת מצב גומיות המשולשים הקדמיים בטסט/בדיקה.',
-        'וידוא החלפת מצתי אירידיום מקוריים לפי המועד.',
-        'היסטוריית טיפולים סדירה עם שמן 0W-20 איכותי.',
-        'בדיקת צמיגים וכיוון פרונט.'
-      ],
-      bottomLine: 'אחת הקניות הבטוחות והאמינות ביותר בישראל, מומלצת בחום למי שרוצה רכב איכותי בלי הפתעות במוסך.'
-    }
-  },
-
-  // 6. Electric Vehicles (Tesla Model 3/Y, BYD Atto 3, MG4, Geely Geometry C)
-  {
-    makeMatch: /טסלה|tesla|byd|ביוואידי|בי ואי די|ג'ילי|גילי|geely|mg|אמ ג'י/i,
-    modelMatch: /מודל|model 3|model y|atto|atto 3|dolphin|seal|geometry|mg4|zs ev/i,
-    fuelMatch: /חשמל|electric/i,
-    problems: [
-      {
-        id: 'ev-tire-wear',
-        name: 'שחיקת צמיגים מואצת',
-        category: 'suspension',
-        description: 'עקב מומנט מיידי גבוה ומשקל רכב כבד (סוללת מתח גבוה), צמיגי רכב חשמלי נשחקים במהירות גבוהה בכ-30% ביחס לרכב בנזין (החלפה כל 35k-50k ק"מ).',
-        affectedYears: 'כל השנים',
-        symptoms: ['שחיקת דופן פנימית בצמיגים', 'ירידה באחיזה בגשם ראשון'],
-        possibleCauses: ['משקל עצמי כבד והאצות חזקות'],
-        severity: 'low',
-        estimatedCostIls: { min: 2400, max: 4800, description: 'סט צמיגים מחוזקים בתקן EV' },
-        isRecurring: true,
-        hasRecallOrTsb: false,
-        sources: [{ name: 'Tyre Reviews UK', date: '2023' }]
-      },
-      {
-        id: 'ev-12v-battery',
-        name: 'כשל במצבר עזר 12V / 16V',
-        category: 'electrical',
-        description: 'מערכות המחשוב, הדלתות והבטיחות פועלות על מצבר עזר מתח נמוך. כשהוא נפרק או מזדקן, הרכב ננעל לחלוטין ואינו מאפשר נסיעה.',
-        affectedYears: '2019–2023',
-        symptoms: ['הודעת "12V battery needs service"', 'חוסר אפשרות לפתוח דלתות או תא מטען'],
-        possibleCauses: ['עומס מערכות מחשוב רצוף במצב חניה'],
-        severity: 'medium',
-        estimatedCostIls: { min: 700, max: 1400 },
-        isRecurring: false,
-        hasRecallOrTsb: false,
-        sources: [{ name: 'Tesla Motors Club', date: '2023' }]
-      },
-      {
-        id: 'ev-brake-calipers',
-        name: 'תפיסת קליפרים וחלודה בצלחות בלימה',
-        category: 'brakes',
-        description: 'בשל שימוש מסיבי בבלימה רגנרטיבית (טעינה בהאטה), הבלמים המכניים כמעט אינם מופעלים ונוטים לצבור חלודה ולתפוס את מובילי הקליפר.',
-        affectedYears: 'כל השנים',
-        symptoms: ['חריקות בלימה פתאומיות', 'אי-אחידות בבלימת חירום'],
-        possibleCauses: ['חוסר שימוש בבלמי החיכוך'],
-        severity: 'low',
-        estimatedCostIls: { min: 350, max: 800, description: 'גירוז מובילים וניקוי צלחות בטיפול תקופתי' },
-        isRecurring: false,
-        hasRecallOrTsb: false,
-        sources: [{ name: 'ADAC EV Test', date: '2023' }]
-      }
-    ],
-    maintenance: {
-      recommendedOilSpec: 'אין שמן מנוע (הנעה 100% חשמלית)',
-      oilCapacityLiters: 0,
-      timingType: 'לא ידוע',
-      timingNotes: 'אין מנוע בעירה פנימית, אין רצועת טיימינג או שרשרת.',
-      schedule: [
-        { item: 'החלפת מסנני מזגן (תא נוסעים / HEPA)', intervalKm: 20000, intervalMonths: 12, importance: 'recommended' },
-        { item: 'בדיקת נוזל בלמים DOT 4 ועובי רפידות', intervalKm: 40000, intervalMonths: 24, importance: 'critical' },
-        { item: 'רוטציית צמיגים וכיוון פרונט', intervalKm: 15000, intervalMonths: 12, importance: 'critical', notes: 'קריטי למניעת שחיקה לא אחידה עקב המשקל הרב' },
-        { item: 'בדיקת נוזל קירור סוללת מתח גבוה וצנרת קירור', intervalKm: 80000, intervalMonths: 48, importance: 'critical' }
-      ]
-    },
-    reliability: {
-      engineRating: 4.9,
-      transmissionRating: 5.0,
-      electricalRating: 4.4,
-      suspensionRating: 4.2,
-      overallScore: 4.6,
-      partsAvailabilityInIsrael: 'גבוהה',
-      maintenanceComplexity: 'פשוטה',
-      summaryHebrew: 'רכב חשמלי מציע עלויות אנרגיה ואחזקה נמוכות משמעותית ביחס לרכב בנזין (אין שמנים, פלאגים או טיימינג). אמינות המנועים החשמליים והסוללה גבוהה מאוד עם אחריות יצרן של 8 שנים במרבית המקרים.'
-    },
-    verdict: {
-      pros: ['חיסכון כספי עצום באנרגיה (טעינה ביתית עולה כ-₪12 ל-100 ק"מ)', 'ביצועים ותאוצה מיידית ללא השהיות', 'שקט מופתי בתא הנוסעים', 'טיפולים תקופתיים זולים ומינימליים'],
-      cons: ['תלות בעמדות טעינה מהירות בנסיעות ארוכות', 'שחיקת צמיגים מהירה מהממוצע', 'ירידת ערך מהירה יותר בעקבות הוזלות מחירים תכופות ברכבים חדשים'],
-      top5Considerations: [
-        'בדיקת בריאות סוללה (State of Health - SOH) דרך מחשב הרכב או אפליקציה.',
-        'בדיקת היסטוריית טעינה: האם נטען בעיקר בטעינה איטית AC ביתית או טעינות מהירות DC.',
-        'בדיקת מצב הצמיגים ותאריך ייצורם (דורשים צמיגי EV מחוזקים).',
-        'וידוא תוקף אחריות היצרן על הסוללה ומנוע ההנעה (לרוב 8 שנים / 150k ק"מ).',
-        'בדיקת תקינות שקע הטעינה ומטען החירום הנייד שמגיע עם הרכב.'
-      ],
-      bottomLine: 'הפתרון המשתלם ביותר למי שיש לו עמדת טעינה ביתית או בעבודה ונוסע קילומטראז גבוה מדי חודש.'
-    }
   }
 ];
+
+export function calculateOwnershipEstimate(
+  modelYear: number,
+  firstRegDate: string,
+  currentBaalut: string,
+  originalMkoriut: string
+) {
+  const currentYear = 2026;
+  const ageYears = Math.max(0.5, currentYear - modelYear);
+  const orig = (originalMkoriut || currentBaalut || 'פרטי').trim();
+
+  let estimatedHandMin = 1;
+  let estimatedHandMax = 1;
+  let explanation = '';
+  let resaleImpact = '';
+
+  if (ageYears <= 2) {
+    estimatedHandMin = 1;
+    estimatedHandMax = 1;
+    explanation = `רכב חדיש יחסית (שנתון ${modelYear}). בסבירות גבוהה מאוד מדובר ברכב יד ראשונה (יד 1).`;
+  } else if (ageYears <= 4) {
+    estimatedHandMin = 1;
+    estimatedHandMax = 2;
+    explanation = `גיל הרכב כ-${Math.round(ageYears)} שנים. ממוצע החלפת בעלות בישראל עומד על כ-3.5 שנים, ולכן הרכב צפוי להיות יד 1 או יד 2 לכל היותר.`;
+  } else if (ageYears <= 7) {
+    estimatedHandMin = 2;
+    estimatedHandMax = 3;
+    explanation = `גיל הרכב כ-${Math.round(ageYears)} שנים. בטווח שנים זה מרבית הרכבים נמצאים ביד 2 או יד 3.`;
+  } else {
+    estimatedHandMin = 2;
+    estimatedHandMax = Math.min(5, Math.round(ageYears / 2.8));
+    explanation = `רכב ותיק (שנתון ${modelYear}). הערכה סטטיסטית של יד 3 ומעלה לפי ממוצע תחלופת בעלים בישראל.`;
+  }
+
+  if (/ליסינג/i.test(orig)) {
+    resaleImpact = 'מקוריות מליסינג גוררת בדרך כלל הפחתה של 8%–14% ממחיר המחירון ביד שנייה (תלוי אם ליסינג מימוני או תפעולי).';
+  } else if (/השכרה/i.test(orig)) {
+    resaleImpact = 'מקוריות מהשכרה גוררת הפחתה ממוצעת של 14%–22% במחירון לוי יצחק / יד 2.';
+  } else if (/חברה/i.test(orig)) {
+    resaleImpact = 'מקוריות מחברה גוררת הפחתה של 10%–16% במחירון.';
+  } else {
+    resaleImpact = 'מקוריות פרטית: שומרת על מחירון מלא ומבוקשת מאוד בשוק המשומשות בישראל.';
+  }
+
+  const handText = estimatedHandMin === estimatedHandMax 
+    ? `יד ${estimatedHandMin} משוערת` 
+    : `יד ${estimatedHandMin} - ${estimatedHandMax} משוערת`;
+
+  return {
+    currentCategory: currentBaalut || 'פרטי',
+    originalHandOrigin: orig,
+    estimatedHandText: handText,
+    estimatedHandMin,
+    estimatedHandMax,
+    estimatedHandExplanation: explanation,
+    resalePriceImpact: resaleImpact,
+    howToVerifyDocument: [
+      'ברישיון הרכב המודפס (המקורי): בדקו את השדה "בעלים קודמים" (00 = יד 1, 01 = יד 2, 02 = יד 3, 03 = יד 4).',
+      'באזור האישי הממשלתי (Gov.il): בעל הרכב יכול להפיק אישור בעלויות רשמי בחינם המפרט את תאריכי העברות הבעלות הקודמות.',
+      'בהעברת בעלות בדואר או באינטרנט: המספר מוצג בצורה מפורשת לפני אישור התשלום.'
+    ]
+  };
+}
+
+export function calculateBuyerDecision(
+  modelYear: number,
+  lastMileageKm: number | undefined,
+  hasActiveRecall: boolean,
+  hasStructuralMod: boolean,
+  isTestValid: boolean,
+  problems: KnownProblem[],
+  specificQuestions?: any[]
+) {
+  const currentYear = 2026;
+  const ageYears = Math.max(1, currentYear - modelYear);
+  const expectedMileage = Math.round(ageYears * 17500); // 17,500 km Israeli annual avg
+
+  let score = 88;
+  const factors: any[] = [];
+
+  // Factor 1: Recalls
+  if (hasActiveRecall) {
+    score -= 30;
+    factors.push({
+      label: 'קריאת שירות בטיחותית פתוחה (ריקול)',
+      score: -30,
+      weight: 'קריטי',
+      status: 'alert',
+      description: 'קיים ריקול פתוח במאגר משרד התחבורה. הרכב לא יוכל לעבור טסט או העברת בעלות עד לביצועו במוסך היבואן.'
+    });
+  } else {
+    factors.push({
+      label: 'סטטוס ריקולים בטיחותיים',
+      score: 10,
+      weight: 'חיובי',
+      status: 'good',
+      description: 'אין קריאות שירות פתוחות המגבילות את רישיון הרכב.'
+    });
+  }
+
+  // Factor 2: Test Validity
+  if (!isTestValid) {
+    score -= 15;
+    factors.push({
+      label: 'תוקף מבחן רישוי שנתי (טסט)',
+      score: -15,
+      weight: 'אזהרה',
+      status: 'warning',
+      description: 'הטסט פג תוקף או קרוב מאוד לסיומו. יש לקחת בחשבון עלות אגרה ותיקונים למבחן.'
+    });
+  } else {
+    factors.push({
+      label: 'מבחן רישוי שנתי בתוקף',
+      score: 10,
+      weight: 'חיובי',
+      status: 'good',
+      description: 'הרכב עבר טסט ומורשה לתנועה כחוק.'
+    });
+  }
+
+  // Factor 3: Structural Modification
+  if (hasStructuralMod) {
+    score -= 10;
+    factors.push({
+      label: 'שינוי מבנה מתועד במאגר',
+      score: -10,
+      weight: 'בדיקה נדרשת',
+      status: 'warning',
+      description: 'מתועד שינוי מבנה (וו גרירה, התקן גז, מיגונים וכו\'). יש לוודא התאמה לרישיון.'
+    });
+  }
+
+  // Factor 4: Mileage vs Age
+  if (lastMileageKm) {
+    const diff = lastMileageKm - expectedMileage;
+    if (diff > 35000) {
+      score -= 12;
+      factors.push({
+        label: 'נסועה (קילומטראז\') מעל הממוצע',
+        score: -12,
+        weight: 'בלאי מואץ',
+        status: 'warning',
+        description: `בטסט האחרון נרשמו ${lastMileageKm.toLocaleString()} ק"מ (מעל הממוצע של ${expectedMileage.toLocaleString()} לשנתון זה).`
+      });
+    } else if (diff < -20000) {
+      score += 8;
+      factors.push({
+        label: 'קילומטראז\' נמוך מהממוצע',
+        score: +8,
+        weight: 'יתרון משמעותי',
+        status: 'good',
+        description: `נסועה נמוכה ביחס לשנתון (${lastMileageKm.toLocaleString()} ק"מ בלבד לעומת צפי של ${expectedMileage.toLocaleString()}).`
+      });
+    }
+  }
+
+  // Factor 5: Mechanical weaknesses
+  const criticalProblems = problems.filter(p => p.severity === 'critical' || p.severity === 'high');
+  if (criticalProblems.length > 0) {
+    score -= 10;
+    factors.push({
+      label: 'נקודות תורפה מכניות מוכרות בדגם',
+      score: -10,
+      weight: 'דורש בדיקה מכנית',
+      status: 'warning',
+      description: `זוהו ${criticalProblems.length} רכיבים הדורשים בדיקה ממוקדת במכון לפני קנייה.`
+    });
+  }
+
+  score = Math.max(20, Math.min(98, score));
+  const riskLevel = score >= 80 ? 'נמוך' : score >= 60 ? 'בינוני' : 'גבוה';
+  const verdictHebrew = score >= 80 
+    ? 'מומלץ לבדיקה: הרכב מציג נתונים חיוביים בעלי סיכון נמוך כפוף לבדיקת מכון שגרתית.'
+    : score >= 60
+      ? 'כדאיות בינונית: הרכב דורש בדיקה ממוקדת סביב נקודות התורפה וההיסטוריה שצוינו.'
+      : 'רמת סיכון גבוהה: אותרו התראות משמעותיות (ריקול פתוח או ליקויים). לא מומלץ להתקדם ללא תיקון והסדרה מראש.';
+
+  const defaultQuestions = [
+    {
+      question: 'האם יש בידיך היסטוריית טיפולים מלאה ומסודרת עם קבלות?',
+      reason: 'ספר טיפולים מתועד הוא ההוכחה היחידה לקילומטראז אמיתי ולשימוש בשמנים בתקן הנכון.',
+      watchOutFor: 'תשובות כמו "טיפלתי אצל חבר" או היעדר תיעוד של יותר מ-30,000 ק"מ רצופים.'
+    },
+    {
+      question: 'האם הרכב עבר תאונות עם פגיעות שלדה (שאסי) או ירידת ערך ביטוחית?',
+      reason: 'מוכרים רבים מעדיפים לא לגלות על תאונות קודמות עד שלב הבדיקה במכון.',
+      watchOutFor: 'בקשו לראות דוח סליקה מחברות הביטוח לפני תשלום למכון בדיקה.'
+    },
+    {
+      question: 'האם הרכב משועבד לבנק או לחברת מימון, והאם קיימים עיקולים?',
+      reason: 'רכב משועבד לא ניתן להעביר בעלות ללא מכתב שחרור רשמי מהגוף המממן.',
+      watchOutFor: 'הפיקו בעצמכם בדיקה ברשם המשכונות (עולה ₪10 בלבד) ואל תסתמכו על הבטחה בעל פה.'
+    }
+  ];
+
+  return {
+    purchaseScore: score,
+    riskLevel,
+    verdictHebrew,
+    scoreFactors: factors,
+    sellerQuestionsScript: specificQuestions && specificQuestions.length > 0 ? [...specificQuestions, ...defaultQuestions] : defaultQuestions,
+    physicalTestTips: [
+      'מכסה מנוע קר: הגיעו כשהמנוע קר לחלוטין. פתחו את פקק מילוי השמן ובדקו שאין משקע דמוי מיונז (סימן לחדירת מים/פריצת אטם ראש).',
+      'מיכל עיבוי נוזל קירור: ודאו שנוזל הקירור נקי וצבעוני (ורוד או ירוק) וללא כתמי שמן צפים או מים רגילים.',
+      'מזגן וחימום בקיץ הישראלי: הדליקו מזגן על מקסימום קור ל-5 דקות. ודאו שהמאוורר נכנס לפעולה ולא נדלקת נורית חום מנוע.',
+      'בדיקת צמיגים ותאריך ייצור: בדקו את קוד ה-DOT בעל 4 הספרות (למשל 2322 = שבוע 23 של שנת 2022). צמיגים בני מעל 4 שנים דורשים החלפה.',
+      'נסיעת מבחן בעיר ובמהיר: שחררו הגה לרגע בכביש ישר לוודא שהרכב לא מושך לצד, והאזינו לנקישות בפניות מלאות במגרש חניה.'
+    ],
+    officialRegistryChecks: [
+      {
+        title: 'בדיקת משכונות ושעבודים',
+        serviceName: 'רשם המשכונות - משרד המשפטים',
+        url: 'https://ica.justice.gov.il/Request/OpenServicesList?Unit=mashkonot',
+        cost: '₪10 באונליין',
+        isMandatory: true,
+        description: 'בדיקה חיונית המוודאת שהרכב אינו משועבד לבנק, הלוואה או חברת ליסינג. העברת בעלות אינה מבטלת משכון קודם!'
+      },
+      {
+        title: 'בדיקת עבר ביטוחי ותביעות',
+        serviceName: 'מרכז הסליקה של חברות הביטוח',
+        url: 'https://slika-ins.co.il',
+        cost: '₪10',
+        isMandatory: true,
+        description: 'חושף את כל תביעות הביטוח, ירידות הערך, תאונות ואובדן להלכה (טוטאל-לוס) ב-7 השנים האחרונות.'
+      },
+      {
+        title: 'אימות בעלות ועיקולים ממשלתי',
+        serviceName: 'האזור האישי הממשלתי Gov.il',
+        url: 'https://my.gov.il',
+        cost: 'חינם (דורש הזדהות בעל הרכב)',
+        isMandatory: true,
+        description: 'הפקת אישור בעלות רשמי המאמת שהמוכר הוא אכן הבעלים החוקי ואין צווי עיקול על הרכב.'
+      }
+    ]
+  };
+}
+
+export function generateSeoInterlinking(plateNumber: string, make: string, commercialName: string, year: number, fuelType: string) {
+  // Diverse Israeli vehicle plates database for internal linking (4-5 direct referrals)
+  const pool = [
+    { plate: '42822302', title: 'טויוטה קורולה היברידית', year: 2021, fuel: 'היברידי', badge: 'משפחתית פופולרית' },
+    { plate: '84457801', title: 'יונדאי איוניק היבריד', year: 2020, fuel: 'היברידי', badge: 'חסכונית מבוקשת' },
+    { plate: '7943026', title: 'סקודה סופרב דיזל FL', year: 2021, fuel: 'דיזל', badge: 'מנהלים / מרווחת' },
+    { plate: '71385104', title: 'לינק אנד קו 02 חשמלי', year: 2026, fuel: 'חשמל', badge: '100% חשמלי' },
+    { plate: '36181801', title: 'סקודה אוקטביה TSI', year: 2017, fuel: 'בנזין', badge: 'תא מטען ענק' },
+    { plate: '1001160', title: 'טויוטה קורולה RunX', year: 2006, fuel: 'בנזין', badge: 'בדיקת ריקול' }
+  ];
+
+  const relatedVehicles = pool.filter(p => p.plate !== plateNumber).slice(0, 4);
+
+  const geoGuides = [
+    { name: 'תל אביב וגוש דן', slug: 'tel-aviv', description: 'מדריך קנייה ומכוני בדיקה מומלצים במרכז' },
+    { name: 'ירושלים והסביבה', slug: 'jerusalem', description: 'דגשים לרכבים שעלו בעליות לירושלים ומכונים מורשים' },
+    { name: 'חיפה והקריות', slug: 'haifa', description: 'בדיקת בלאי בלמים ומנוע בנסיעות הכרמל ומכוני בדיקה' },
+    { name: 'באר שבע והדרום', slug: 'beer-sheva', description: 'בדיקת מערכות קירור ומזגן באקלים חם' },
+    { name: 'ראשון לציון והשפלה', slug: 'rishon-lezion', description: 'מרכזי טרייד-אין ומכוני בדיקה מובילים בשפלה' }
+  ];
+
+  const cleanModelSlug = `${make}-${commercialName}`.toLowerCase().replace(/[^a-z0-9א-ת]/g, '-');
+
+  return {
+    relatedVehicles,
+    modelHub: {
+      title: `מדריך רכב מלא לדגם ${make} ${commercialName}`,
+      slug: cleanModelSlug,
+      description: `כל מה שצריך לדעת לפני קניית ${make} ${commercialName}: מפרט, אמינות, עלויות ותקלות.`
+    },
+    geoGuides
+  };
+}
 
 export function getLicensingFeeByGroup(group: number): number {
   const fees: Record<number, number> = {
@@ -574,6 +647,9 @@ export function resolveVehicleIntelligence(
       maintenance: matched.maintenance,
       reliability: matched.reliability,
       verdict: matched.verdict,
+      specificSellerQuestions: matched.specificSellerQuestions,
+      modelSlug: matched.modelSlug,
+      modelHubTitle: matched.modelHubTitle,
       costs: {
         annualLicensingFeeIls,
         licensingGroup: licensingGroup || 3,
@@ -622,6 +698,9 @@ export function resolveVehicleIntelligence(
         sources: [{ name: 'מפרט בדיקת רכב ממוחשבת', date: '2023' }]
       }
     ],
+    specificSellerQuestions: undefined,
+    modelSlug: 'general-vehicle',
+    modelHubTitle: `מדריך קנייה לרכבי ${make}`,
     maintenance: {
       recommendedOilSpec: isElectric ? 'אין שמן מנוע' : '5W-30 או 0W-20 סינטטי מלא בתקן יצרן',
       oilCapacityLiters: isElectric ? 0 : 4.0,

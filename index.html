@@ -4,15 +4,73 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f9d616'><rect width='24' height='16' y='4' rx='3' fill='%23f9d616'/><rect width='5' height='16' y='4' rx='1' fill='%230038b8'/><text x='13' y='15' font-size='8' font-weight='bold' text-anchor='middle' fill='%23000'>IL</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AutoScope Israel | דוח רכב מקיף ומודיעין רכב לפי מספר רישוי</title>
-    <meta name="description" content="הכניסו מספר רישוי וקבלו דוח רכב מקיף: מפרט טכני, צריכת דלק, קילומטראז' בטסט, היסטוריית בעלות, ריקולים פתוחים, תקלות נפוצות ועלויות אחזקה." />
-    <meta property="og:title" content="AutoScope Israel - מודיעין רכב מתקדם" />
-    <meta property="og:description" content="בדיקת רכב לפי מספר רישוי: נתוני משרד התחבורה, היסטוריה, תקלות נפוצות, מפרט ומחשבון דלק." />
+    <title>AutoScope Israel | בדיקת רכב לפני קנייה לפי מספר רישוי</title>
+    <meta name="description" content="דוח רכב מקיף לקוני רכב יד שנייה בישראל: אימות מקוריות בעלות, הערכת מספר יד, קילומטראז בטסט, ריקולים פתוחים, מחלות דגם סמויות ותסריט שאלות למוכר." />
+    <meta name="keywords" content="בדיקת רכב לפי מספר רישוי, בדיקת רכב לפני קנייה, כמה ידיים עבר הרכב, מקוריות ליסינג פרטי, ריקול פתוח משרד התחבורה, קילומטראז בטסט, מחלות דגם" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://autoscope-il.web.app/" />
+    <meta property="og:title" content="AutoScope Israel - מודיעין רכב לקוני יד שנייה" />
+    <meta property="og:description" content="הכניסו מספר רישוי וקבלו דוח רכב מקיף: אימות מקוריות ויד, קילומטראז בטסט, ריקולים פתוחים, תקלות נפוצות ושאלות למוכר." />
+    <meta property="og:image" content="https://autoscope-il.web.app/hero-car.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://autoscope-il.web.app/" />
+    <meta property="twitter:title" content="AutoScope Israel - בדיקת רכב לפני קנייה" />
+    <meta property="twitter:description" content="דוח רכב מלא לפי מספר רישוי: מקוריות בעלות, יד משוערת, קילומטראז' בטסט וריקולים פתוחים." />
+    <meta property="twitter:image" content="https://autoscope-il.web.app/hero-car.jpg" />
+
     <meta name="theme-color" content="#0359a1" />
+    <link rel="canonical" href="https://autoscope-il.web.app/" />
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Schema.org JSON-LD Structured Data for Local SEO & SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://autoscope-il.web.app/#website",
+          "url": "https://autoscope-il.web.app/",
+          "name": "AutoScope Israel",
+          "description": "פלטפורמת מודיעין רכב מתקדמת לקוני רכב יד שנייה בישראל לפי מספר רישוי",
+          "inLanguage": "he-IL",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://autoscope-il.web.app/car/{search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Service",
+          "name": "בדיקת רכב לפני קנייה",
+          "provider": {
+            "@type": "Organization",
+            "name": "AutoScope Israel"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "Israel"
+          },
+          "audience": {
+            "@type": "Audience",
+            "audienceType": "קוני רכב יד שנייה בישראל"
+          },
+          "serviceType": "מודיעין רכב ובדיקת היסטוריה משרד התחבורה"
+        }
+      ]
+    }
+    </script>
   </head>
   <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen selection:bg-brand-500 selection:text-white">
     <div id="root"></div>

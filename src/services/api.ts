@@ -1,5 +1,10 @@
 import { DataSourceItem, VehicleReportData } from '../types/vehicle';
-import { resolveVehicleIntelligence } from './intelligence';
+import { 
+  resolveVehicleIntelligence, 
+  calculateOwnershipEstimate, 
+  calculateBuyerDecision, 
+  generateSeoInterlinking 
+} from './intelligence';
 
 const ACTIVE_VEHICLES_RESOURCE = '053cea08-09bc-40ec-8f7a-156f0677aff3';
 const WLTP_RESOURCE = '142afde2-6228-49f9-8a29-9b6c3a0cbe40';
@@ -95,7 +100,8 @@ export interface ProgressCallback {
 
 export async function fetchVehicleReport(
   rawPlate: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  forceRefresh: boolean = false
 ): Promise<VehicleReportData> {
   const cleanPlate = normalizePlate(rawPlate);
   if (!isValidPlate(cleanPlate)) {
@@ -103,21 +109,42 @@ export async function fetchVehicleReport(
   }
 
   const plateNum = parseInt(cleanPlate, 10);
-
-  // Check cache
   const cacheKey = `autoscope_report_${cleanPlate}`;
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      const cacheAgeMs = Date.now() - new Date(parsed.generatedAt).getTime();
-      if (cacheAgeMs < 24 * 60 * 60 * 1000) {
-        onProgress?.('טוען נתונים מהמטמון המאומת...', 100);
-        return parsed;
+
+  // Smart Cache Invalidation logic
+  if (!forceRefresh) {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed: VehicleReportData = JSON.parse(cached);
+        const cacheAgeMs = Date.now() - new Date(parsed.generatedAt).getTime();
+        const cacheAgeDays = Math.floor(cacheAgeMs / (1000 * 60 * 60 * 24));
+
+        // If cache is fresh (< 7 days) and valid, use it immediately
+        if (cacheAgeDays < 7) {
+          onProgress?.('טוען נתונים מהמטמון המאומת...', 100);
+          parsed.cacheMetadata = {
+            cachedAt: parsed.generatedAt,
+            cacheAgeDays,
+            isStale: false
+          };
+          return parsed;
+        }
+
+        // If cache is between 7 and 30 days, we can mark it as stale or revalidate
+        if (cacheAgeDays < 30) {
+          parsed.cacheMetadata = {
+            cachedAt: parsed.generatedAt,
+            cacheAgeDays,
+            isStale: true
+          };
+          // Return stale data quickly, but user can click refresh
+          return parsed;
+        }
       }
+    } catch (e) {
+      // Ignore localStorage errors
     }
-  } catch (e) {
-    // Ignore localStorage errors
   }
 
   const sources: DataSourceItem[] = [];
@@ -152,7 +179,7 @@ export async function fetchVehicleReport(
     name: 'מאגר כלי רכב פרטיים ומסחריים פעילים - משרד התחבורה',
     category: 'government',
     url: 'https://data.gov.il/he/datasets/ministry_of_transport/private-and-commercial-vehicles',
-    fieldsSupplied: ['יצרן', 'דגם', 'כינוי מסחרי', 'שנת ייצור', 'קוד מנוע', 'תוקף טסט', 'צבע', 'צמיגים', 'רמת אבזור בטיחותי'],
+    fieldsSupplied: ['יצרן', 'דגם', 'כינוי מסחרי', 'שנת ייצור', 'קוד מנוע', 'תוקף טסט', 'צבע', 'צמיגים', 'רמת אבזור בטיחותי', 'בעלות'],
     lastSync: nowStr,
     confidence: 'OFFICIAL',
     status: 'connected'
@@ -286,6 +313,15 @@ export async function fetchVehicleReport(
     licensingGroup
   );
 
+  // Ownership & Hand Intelligence Calculation
+  const firstReg = activeRec.moed_aliya_lakvish || `${shnatYitzur}-01`;
+  const ownershipDetails = calculateOwnershipEstimate(
+    shnatYitzur,
+    firstReg,
+    activeRec.baalut || 'פרטי',
+    shinui.mkoriut_nm || activeRec.baalut || 'פרטי'
+  );
+
   // Calculate inspection months left
   let inspectionDueMonths = 0;
   if (activeRec.tokef_dt) {
@@ -293,6 +329,7 @@ export async function fetchVehicleReport(
     const diffMs = validDate.getTime() - Date.now();
     inspectionDueMonths = Math.round(diffMs / (1000 * 60 * 60 * 24 * 30));
   }
+  const isTestValid = inspectionDueMonths >= 0;
 
   // Calculate realistic fuel consumption
   const co2Wltp = parseFloat(wltp.CO2_WLTP) || undefined;
@@ -307,7 +344,6 @@ export async function fetchVehicleReport(
 
   if (!isElectric) {
     if (co2Wltp && co2Wltp > 0) {
-      // Estimate from WLTP CO2 emissions (typical: petrol produces ~23.5g CO2/L, diesel ~26.5g CO2/L)
       const co2Factor = isDiesel ? 26.5 : 23.5;
       combinedL100 = parseFloat(((co2Wltp * 10) / (co2Factor * 10)).toFixed(1));
     } else if (displacement > 0) {
@@ -358,6 +394,22 @@ export async function fetchVehicleReport(
     importerWebsite: r.WEBSITE || ''
   }));
 
+  const lastKm = shinui.kilometer_test_aharon ? parseInt(shinui.kilometer_test_aharon, 10) : undefined;
+
+  // Buyer Decision Suite Calculation
+  const buyerDecision = calculateBuyerDecision(
+    shnatYitzur,
+    lastKm,
+    specificVehicleRecalls.length > 0,
+    shinui.shinui_mivne_ind === 1,
+    isTestValid,
+    intelligence.knownProblems,
+    intelligence.specificSellerQuestions
+  );
+
+  // Programmatic SEO Interlinking (4-5 direct referrals)
+  const seoInterlinking = generateSeoInterlinking(cleanPlate, make, commercialName, shnatYitzur, fuelType);
+
   const report: VehicleReportData = {
     plateNumber: cleanPlate,
     formattedPlate: formatPlateDisplay(cleanPlate),
@@ -367,7 +419,7 @@ export async function fetchVehicleReport(
       commercialName,
       trimLevel,
       modelYear: shnatYitzur,
-      firstRegistrationDate: activeRec.moed_aliya_lakvish || `${shnatYitzur}-01`,
+      firstRegistrationDate: firstReg,
       registrationValidity: activeRec.tokef_dt || 'לא צוין',
       lastInspectionDate: activeRec.mivchan_acharon_dt || 'לא צוין',
       engineCode: activeRec.degem_manoa || 'לא צוין',
@@ -383,7 +435,8 @@ export async function fetchVehicleReport(
       doorsCount: parseInt(wltp.mispar_dlatot, 10) || 5,
       seatsCount: parseInt(wltp.mispar_moshavim, 10) || 5,
       vinMasked: activeRec.misgeret ? `${activeRec.misgeret.slice(0, 3)}****${activeRec.misgeret.slice(-4)}` : undefined,
-      horaatRishum: activeRec.horaat_rishum ? parseInt(activeRec.horaat_rishum, 10) : undefined
+      horaatRishum: activeRec.horaat_rishum ? parseInt(activeRec.horaat_rishum, 10) : undefined,
+      ownershipDetails
     },
     specs: {
       engine: {
@@ -444,20 +497,27 @@ export async function fetchVehicleReport(
     reliability: intelligence.reliability,
     maintenance: intelligence.maintenance,
     history: {
-      lastInspectionMileageKm: shinui.kilometer_test_aharon ? parseInt(shinui.kilometer_test_aharon, 10) : undefined,
+      lastInspectionMileageKm: lastKm,
       hasStructuralModification: shinui.shinui_mivne_ind === 1,
       hasColorChange: shinui.shnui_zeva_ind === 1,
       hasTireSizeChange: shinui.shinui_zmig_ind === 1,
       hasLpgConversion: shinui.gapam_ind === 1,
       originalOwnership: shinui.mkoriut_nm || activeRec.baalut || 'פרטי',
-      registrationStatus: inspectionDueMonths < 0 ? 'פג תוקף' : 'פעיל',
-      inspectionDueMonths
+      registrationStatus: isTestValid ? 'פעיל' : 'פג תוקף',
+      inspectionDueMonths,
+      mileageAnalysis: lastKm ? {
+        actualKm: lastKm,
+        expectedKm: Math.round((2026 - shnatYitzur) * 17500),
+        status: lastKm > (2026 - shnatYitzur) * 19000 ? 'high' : lastKm < (2026 - shnatYitzur) * 12000 ? 'low' : 'normal',
+        text: lastKm > (2026 - shnatYitzur) * 19000 ? 'קילומטראז גבוה מהממוצע בישראל' : lastKm < (2026 - shnatYitzur) * 12000 ? 'קילומטראז נמוך מהממוצע - יתרון!' : 'קילומטראז תואם לממוצע השנתי בישראל'
+      } : undefined
     },
     recalls: {
       specificVehicleUncompletedRecalls: specificVehicleRecalls,
       modelRecalls: modelRecallsList,
       hasActiveRecall: specificVehicleRecalls.length > 0
     },
+    buyerDecision,
     prePurchaseChecklist: {
       title: 'צ\'ק-ליסט בדיקה לפני קנייה - מומלץ עבור דגם זה',
       items: [
@@ -480,8 +540,14 @@ export async function fetchVehicleReport(
       fuelEconomyRating: isElectric ? 5 : isHybrid ? 5 : (combinedKmL && combinedKmL > 16 ? 4 : 3),
       bottomLine: intelligence.verdict.bottomLine
     },
+    seoInterlinking,
     sources,
-    generatedAt: nowStr
+    generatedAt: nowStr,
+    cacheMetadata: {
+      cachedAt: nowStr,
+      cacheAgeDays: 0,
+      isStale: false
+    }
   };
 
   // Cache report in localStorage

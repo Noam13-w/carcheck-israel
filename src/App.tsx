@@ -3,54 +3,82 @@ import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
 import { LoadingProgress } from './components/LoadingProgress';
 import { ReportView } from './components/ReportView';
-import { fetchVehicleReport, normalizePlate } from './services/api';
+import { fetchVehicleReport, normalizePlate, formatPlateDisplay } from './services/api';
 import { VehicleReportData } from './types/vehicle';
 import { AlertCircle, RefreshCw, ArrowRight } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [report, setReport] = useState<VehicleReportData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [loadingStep, setLoadingStep] = useState<string>('');
   const [loadingPercent, setLoadingPercent] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [searchedPlate, setSearchedPlate] = useState<string>('');
 
-  // Handle URL query param (e.g. ?plate=7943026) for deep linking & sharing
+  // Handle URL routing: /car/:plate OR ?plate=:plate
   useEffect(() => {
+    let initialPlate: string | null = null;
+
+    // Check query params
     const params = new URLSearchParams(window.location.search);
-    const plateParam = params.get('plate');
-    if (plateParam) {
-      handleSearch(plateParam);
+    if (params.get('plate')) {
+      initialPlate = params.get('plate');
+    } else {
+      // Check path /car/:plate
+      const match = window.location.pathname.match(/\/car\/(\d+)/i);
+      if (match && match[1]) {
+        initialPlate = match[1];
+      }
+    }
+
+    if (initialPlate) {
+      handleSearch(initialPlate);
     }
   }, []);
 
-  const handleSearch = async (plate: string) => {
+  // Update dynamic page title & meta for SEO
+  useEffect(() => {
+    if (report) {
+      document.title = `${report.identity.make} ${report.identity.commercialName} (${report.identity.modelYear}) - מספר ${report.formattedPlate} | דוח רכב AutoScope`;
+    } else {
+      document.title = 'AutoScope Israel | בדיקת רכב לפני קנייה לפי מספר רישוי';
+    }
+  }, [report]);
+
+  const handleSearch = async (plate: string, forceRefresh: boolean = false) => {
     const clean = normalizePlate(plate);
     if (!clean) return;
 
     setSearchedPlate(clean);
     setError(null);
-    setIsLoading(true);
-    setLoadingStep('מתחבר לשרת משרד התחבורה...');
-    setLoadingPercent(10);
+    if (forceRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+      setLoadingStep('מתחבר לשרת משרד התחבורה...');
+      setLoadingPercent(10);
+    }
 
-    // Update URL query without full reload
-    const url = new URL(window.location.href);
-    url.searchParams.set('plate', clean);
-    window.history.pushState({}, '', url.toString());
+    // Update URL without full reload (support /car/1234567 or ?plate=1234567)
+    const newUrl = `/car/${clean}`;
+    window.history.pushState({}, '', newUrl);
 
     try {
       const data = await fetchVehicleReport(clean, (step, pct) => {
         setLoadingStep(step);
         setLoadingPercent(pct);
-      });
+      }, forceRefresh);
       setReport(data);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!forceRefresh) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (err: any) {
       setError(err?.message || 'אירעה שגיאה באיתור פרטי הרכב. אנא נסה שוב בעוד מספר רגעים.');
       setReport(null);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -58,10 +86,9 @@ export const App: React.FC = () => {
     setReport(null);
     setError(null);
     setIsLoading(false);
+    setIsRefreshing(false);
     setSearchedPlate('');
-    const url = new URL(window.location.href);
-    url.searchParams.delete('plate');
-    window.history.pushState({}, '', url.toString());
+    window.history.pushState({}, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -102,11 +129,11 @@ export const App: React.FC = () => {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
-                  onClick={() => handleSearch(searchedPlate)}
+                  onClick={() => handleSearch(searchedPlate, true)}
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-md transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  <span>נסה שוב</span>
+                  <span>נסה שוב ברענון מלא</span>
                 </button>
                 <button
                   onClick={handleReset}
@@ -125,13 +152,15 @@ export const App: React.FC = () => {
           <ReportView 
             report={report}
             onNewSearch={handleReset}
+            onRefresh={(plate) => handleSearch(plate, true)}
+            isRefreshing={isRefreshing}
           />
         )}
 
         {/* Default Home Page State */}
         {!isLoading && !error && !report && (
           <HomePage 
-            onSearch={handleSearch}
+            onSearch={(plate) => handleSearch(plate)}
             isLoading={isLoading}
           />
         )}

@@ -52,7 +52,7 @@ export interface VehicleReportData {
   plateNumber: string;
   formattedPlate: string;
   
-  // Section A: Vehicle Identity
+  // Section A: Vehicle Identity & Ownership / Hand details
   identity: {
     make: string;
     model: string;
@@ -76,6 +76,18 @@ export interface VehicleReportData {
     seatsCount?: number;
     vinMasked?: string;
     horaatRishum?: number;
+
+    // Advanced Hand & Ownership intelligence
+    ownershipDetails: {
+      currentCategory: string; // פרטי, חברה, ליסינג
+      originalHandOrigin: string; // מקוריות יד ראשונה (פרטי, ליסינג, השכרה)
+      estimatedHandText: string; // למשל: "יד 1 - 2 משוערת"
+      estimatedHandMin: number;
+      estimatedHandMax: number;
+      estimatedHandExplanation: string;
+      resalePriceImpact: string; // השפעה צפויה על מחירון
+      howToVerifyDocument: string[];
+    };
   };
 
   // Section B: Technical Specifications
@@ -174,6 +186,12 @@ export interface VehicleReportData {
     originalOwnership: string;
     registrationStatus: 'בתוקף' | 'פג תוקף' | 'מורד מהכביש' | 'פעיל';
     inspectionDueMonths: number;
+    mileageAnalysis?: {
+      actualKm?: number;
+      expectedKm: number;
+      status: 'low' | 'normal' | 'high';
+      text: string;
+    };
   };
 
   // Section H: Recalls
@@ -200,7 +218,35 @@ export interface VehicleReportData {
     hasActiveRecall: boolean;
   };
 
-  // Section I: Pre-Purchase Checklist
+  // Section I: Pre-Purchase Second-Hand Buyer Decision Suite
+  buyerDecision: {
+    purchaseScore: number; // 0 - 100
+    riskLevel: 'נמוך' | 'בינוני' | 'גבוה';
+    verdictHebrew: string;
+    scoreFactors: {
+      label: string;
+      score: number;
+      weight: string;
+      status: 'good' | 'warning' | 'alert';
+      description: string;
+    }[];
+    sellerQuestionsScript: {
+      question: string;
+      reason: string;
+      watchOutFor: string;
+    }[];
+    physicalTestTips: string[];
+    officialRegistryChecks: {
+      title: string;
+      serviceName: string;
+      url: string;
+      cost: string;
+      isMandatory: boolean;
+      description: string;
+    }[];
+  };
+
+  // Pre-Purchase Checklist (legacy compatibility)
   prePurchaseChecklist: {
     title: string;
     items: string[];
@@ -229,7 +275,33 @@ export interface VehicleReportData {
     bottomLine: string;
   };
 
+  // Programmatic SEO Interlinking (4-5 direct referrals)
+  seoInterlinking: {
+    relatedVehicles: {
+      plate: string;
+      title: string;
+      year: number;
+      fuel: string;
+      badge: string;
+    }[];
+    modelHub: {
+      title: string;
+      slug: string;
+      description: string;
+    };
+    geoGuides: {
+      name: string;
+      slug: string;
+      description: string;
+    }[];
+  };
+
   // Transparency & Source Registry
   sources: DataSourceItem[];
   generatedAt: string;
+  cacheMetadata?: {
+    cachedAt: string;
+    cacheAgeDays: number;
+    isStale: boolean;
+  };
 }
