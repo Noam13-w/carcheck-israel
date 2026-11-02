@@ -505,7 +505,7 @@ export function calculateBuyerDecision(
   }
 
   score = Math.max(20, Math.min(98, score));
-  const riskLevel = score >= 80 ? 'נמוך' : score >= 60 ? 'בינוני' : 'גבוה';
+  const riskLevel: 'נמוך' | 'בינוני' | 'גבוה' = score >= 80 ? 'נמוך' : score >= 60 ? 'בינוני' : 'גבוה';
   const verdictHebrew = score >= 80 
     ? 'מומלץ לבדיקה: הרכב מציג נתונים חיוביים בעלי סיכון נמוך כפוף לבדיקת מכון שגרתית.'
     : score >= 60

@@ -923,9 +923,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
             </table>
           </div>
 
-          {report.maintenance.timingNotes && (
+          {report.maintenance.timingReplacementNotes && (
             <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-900 font-medium">
-              💡 {report.maintenance.timingNotes}
+              💡 {report.maintenance.timingReplacementNotes}
             </div>
           )}
         </section>

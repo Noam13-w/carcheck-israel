@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   ShieldCheck, Database, Wrench, Fuel, AlertTriangle, FileSpreadsheet, 
   HelpCircle, ChevronDown, ChevronUp, CheckCircle2, ArrowLeft, Zap, Sparkles,
-  Users, MapPin, DollarSign, Check, Shield, Search
+  Users, MapPin, DollarSign, Check, Shield, Search, ShieldAlert
 } from 'lucide-react';
 import { LicensePlateInput } from './LicensePlateInput';
 
