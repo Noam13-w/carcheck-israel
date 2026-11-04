@@ -16,6 +16,7 @@ import { fetchVehicleReport, normalizePlate } from './services/api';
 import { VehicleReportData } from './types/vehicle';
 import { CookieConsentType } from './types/legal';
 import { AlertCircle, RefreshCw, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const COOKIE_CONSENT_KEY = 'autoscope_cookie_consent';
 
@@ -148,67 +149,102 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
-        
-        {/* Loading State */}
-        {isLoading && (
-          <div className="py-12 px-4">
-            <LoadingProgress 
-              plateNumber={searchedPlate}
-              currentStep={loadingStep}
-              progressPercent={loadingPercent}
-            />
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {/* Loading State */}
+          {isLoading && (
+            <motion.div 
+              key="loading-view"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="py-12 px-4"
+            >
+              <LoadingProgress 
+                plateNumber={searchedPlate}
+                currentStep={loadingStep}
+                progressPercent={loadingPercent}
+              />
+            </motion.div>
+          )}
 
-        {/* Error State */}
-        {!isLoading && error && (
-          <div className="max-w-xl mx-auto my-16 px-4">
-            <div className="bg-white rounded-2xl border border-rose-200 shadow-xl p-6 sm:p-8 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 border border-rose-100">
-                <AlertCircle className="w-8 h-8" />
+          {/* Error State */}
+          {!isLoading && error && (
+            <motion.div 
+              key="error-view"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              className="max-w-xl mx-auto my-16 px-4"
+            >
+              <div className="bg-white rounded-3xl border border-rose-100 shadow-card p-6 sm:p-8 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 border border-rose-100">
+                  <AlertCircle className="w-8 h-8" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">לא הצלחנו לאתר את הרכב</h2>
+                <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                  {error}
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSearch(searchedPlate, true)}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-btn-primary transition-all focus:ring-2 focus:ring-brand-500"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>נסה שוב ברענון מלא</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleReset}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:ring-2 focus:ring-slate-400"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                    <span>חזרה לחיפוש רכב אחר</span>
+                  </motion.button>
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">לא הצלחנו לאתר את הרכב</h2>
-              <p className="text-sm text-slate-600 leading-relaxed mb-6">
-                {error}
-              </p>
+            </motion.div>
+          )}
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => handleSearch(searchedPlate, true)}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-md transition-colors focus:ring-2 focus:ring-brand-500"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>נסה שוב ברענון מלא</span>
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:ring-2 focus:ring-slate-400"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  <span>חזרה לחיפוש רכב אחר</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+          {/* Report View State */}
+          {!isLoading && !error && report && (
+            <motion.div 
+              key={`report-${report.plateNumber}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <ReportView 
+                report={report}
+                onNewSearch={handleReset}
+                onRefresh={(plate) => handleSearch(plate, true)}
+                isRefreshing={isRefreshing}
+              />
+            </motion.div>
+          )}
 
-        {/* Report View State */}
-        {!isLoading && !error && report && (
-          <ReportView 
-            report={report}
-            onNewSearch={handleReset}
-            onRefresh={(plate) => handleSearch(plate, true)}
-            isRefreshing={isRefreshing}
-          />
-        )}
-
-        {/* Default Home Page State */}
-        {!isLoading && !error && !report && (
-          <HomePage 
-            onSearch={(plate) => handleSearch(plate)}
-            isLoading={isLoading}
-          />
-        )}
+          {/* Default Home Page State */}
+          {!isLoading && !error && !report && (
+            <motion.div 
+              key="home-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <HomePage 
+                onSearch={(plate) => handleSearch(plate)}
+                isLoading={isLoading}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </main>
 

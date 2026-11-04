@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Menu, X, Search, Clock, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface HeaderProps {
   onNewSearch?: () => void;
@@ -41,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/60 no-print">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 py-3.5 flex items-center justify-between">
         
         {/* Right Side: Brand Logo + Navigation */}
@@ -113,14 +114,16 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {hasActiveReport && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => handleNavClick('new')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#f0f1ff] text-brand-700 hover:bg-brand-100 transition-colors shadow-soft-sm"
             >
               <Search className="w-3.5 h-3.5" />
               <span>בדיקה חדשה</span>
-            </button>
+            </motion.button>
           )}
 
           {/* Mobile Hamburger Button */}
@@ -136,35 +139,43 @@ export const Header: React.FC<HeaderProps> = ({
 
       </div>
 
-      {/* Mobile Dropdown Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-2 shadow-lg">
-          <button
-            type="button"
-            onClick={() => handleNavClick('new')}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-brand-50 text-brand-700 font-bold text-sm text-right"
+      {/* Mobile Dropdown Menu with Animation */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="md:hidden bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-4 pt-2 pb-4 space-y-2 shadow-lg overflow-hidden"
           >
-            <Search className="w-4 h-4" />
-            <span>בדיקה חדשה</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleNavClick('history')}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-50 font-medium text-sm text-right"
-          >
-            <Clock className="w-4 h-4 text-slate-400" />
-            <span>היסטוריית בדיקות</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleNavClick('faq')}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-50 font-medium text-sm text-right"
-          >
-            <HelpCircle className="w-4 h-4 text-slate-400" />
-            <span>שאלות נפוצות</span>
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => handleNavClick('new')}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#f0f1ff] text-brand-700 font-bold text-sm text-right"
+            >
+              <Search className="w-4 h-4" />
+              <span>בדיקה חדשה</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNavClick('history')}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-slate-700 hover:bg-slate-50 font-medium text-sm text-right"
+            >
+              <Clock className="w-4 h-4 text-slate-400" />
+              <span>היסטוריית בדיקות</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNavClick('faq')}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-slate-700 hover:bg-slate-50 font-medium text-sm text-right"
+            >
+              <HelpCircle className="w-4 h-4 text-slate-400" />
+              <span>שאלות נפוצות</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

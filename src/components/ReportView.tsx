@@ -7,7 +7,6 @@ import {
   Scale, 
   ShieldCheck, 
   ShieldAlert, 
-  AlertTriangle, 
   Fuel, 
   Gauge, 
   Cpu, 
@@ -21,8 +20,10 @@ import {
   ExternalLink, 
   RefreshCw,
   HelpCircle,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { VehicleReportData, ProblemSeverity } from '../types/vehicle';
 import { FuelCostCalculator } from './FuelCostCalculator';
 import { formatPlateDisplay } from '../services/api';
@@ -91,143 +92,169 @@ export const ReportView: React.FC<ReportViewProps> = ({
       case 'critical':
       case 'high':
         return (
-          <span className="bg-rose-50 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-rose-200">
+          <span className="bg-rose-50 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-xl border border-rose-200">
             חשיבות גבוהה לבדיקה
           </span>
         );
       case 'medium':
         return (
-          <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-200">
+          <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-xl border border-amber-200">
             בלאי מוכר בדגם
           </span>
         );
       default:
         return (
-          <span className="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200">
+          <span className="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-xl border border-slate-200">
             תחזוקה שוטפת
           </span>
         );
     }
   };
 
-  const engineLiters = report.specs.engine.displacementCc > 0 
-    ? `${(report.specs.engine.displacementCc / 1000).toFixed(1)} ` 
-    : '';
-
   return (
     <div className="bg-[#f7f8fc] min-h-screen py-6 sm:py-10 px-4 sm:px-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
         
-        {/* Top Action Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
-          <button
+        {/* Top Floating Action Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 no-print">
+          <motion.button
+            whileHover={{ x: 3 }}
+            whileTap={{ scale: 0.98 }}
             type="button"
             onClick={onNewSearch}
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors"
           >
             <ArrowRight className="w-4 h-4" />
             <span>בדיקת רכב נוסף</span>
-          </button>
+          </motion.button>
 
           <div className="flex items-center gap-2">
             {onRefresh && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 type="button"
                 onClick={() => onRefresh(report.plateNumber)}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200/80 hover:border-brand-200 text-slate-700 shadow-sm transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 text-xs font-bold shadow-soft-sm transition-all"
+                title="רענן נתונים ישירות ממאגרי הממשלה"
               >
-                <RefreshCw className={`w-3.5 h-3.5 text-brand-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>{isRefreshing ? 'מעדכן...' : 'רענון נתונים'}</span>
-              </button>
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-brand-600' : ''}`} />
+                <span>{isRefreshing ? 'מרענן...' : 'רענון נתונים'}</span>
+              </motion.button>
             )}
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200/80 hover:border-brand-200 text-slate-700 shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 text-xs font-bold shadow-soft-sm transition-all relative"
             >
-              <Share2 className="w-3.5 h-3.5 text-brand-600" />
-              <span>{copiedShare ? 'הקישור הועתק!' : 'שיתוף'}</span>
-            </button>
+              <Share2 className="w-3.5 h-3.5" />
+              <span>שיתוף</span>
+              <AnimatePresence>
+                {copiedShare && (
+                  <motion.span 
+                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.9 }}
+                    className="absolute -top-9 right-1/2 translate-x-1/2 bg-slate-900 text-white text-[11px] font-bold py-1 px-2.5 rounded-lg shadow-lg whitespace-nowrap z-50 pointer-events-none"
+                  >
+                    הקישור הועתק!
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200/80 hover:border-brand-200 text-slate-700 shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 text-xs font-bold shadow-soft-sm transition-all"
             >
-              <Printer className="w-3.5 h-3.5 text-brand-600" />
+              <Printer className="w-3.5 h-3.5" />
               <span>הדפסה / PDF</span>
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* =========================================================
-            MAIN VEHICLE SUMMARY CARD (Matching CarInfo Card Design)
+            HERO VEHICLE SUMMARY CARD
            ========================================================= */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/90 mb-8 relative overflow-hidden"
+        >
           
-          {/* Top Row: Identity & Status Pills */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-7 border-b border-slate-100">
+          {/* Top Row: Plate + Badges + Vehicle Title */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
             
+            {/* Left/Main Column: Vehicle Title & Identity */}
             <div>
-              {/* License Plate + Year Pill */}
-              <div className="flex flex-wrap items-center gap-3 mb-3.5">
+              
+              {/* Badges Row */}
+              <div className="flex flex-wrap items-center gap-2.5 mb-3">
+                {/* Yellow License Plate Badge */}
                 <div 
-                  className="inline-flex items-center bg-[#f9d616] text-slate-950 font-mono font-black text-lg sm:text-xl px-3.5 py-1 rounded-xl border-2 border-slate-900 shadow-sm"
+                  className="inline-flex items-center bg-[#f9d616] text-slate-950 font-black px-3 py-1 rounded-xl border-2 border-slate-900 shadow-plate text-sm sm:text-base font-mono"
                   dir="ltr"
                 >
-                  <span className="text-[11px] bg-[#0038b8] text-white px-1.5 py-0.5 rounded mr-2 font-sans font-bold">
-                    IL
-                  </span>
-                  <span>{report.formattedPlate}</span>
+                  <span className="text-[10px] bg-[#0038b8] text-white px-1.5 py-0.5 rounded mr-2 font-bold font-sans">IL</span>
+                  <span className="plate-font tracking-wider">{report.formattedPlate}</span>
                 </div>
 
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-brand-50 text-brand-800 text-xs sm:text-sm font-bold">
-                  <span>{engineLiters}{report.identity.fuelType}</span>
+                {/* Powertrain Pill */}
+                <div className="inline-flex items-center gap-1.5 bg-[#f0f1ff] text-brand-700 px-3 py-1 rounded-xl text-xs sm:text-sm font-bold border border-brand-100">
+                  <span>{report.identity.fuelType}</span>
                   <span>•</span>
                   <span>{report.identity.modelYear}</span>
                 </div>
 
-                {report.identity.trimLevel && (
-                  <span className="text-xs sm:text-sm font-semibold text-slate-600 bg-[#f7f8fc] px-3 py-1.5 rounded-xl border border-slate-200/60">
+                {/* Trim Level Pill */}
+                {report.identity.trimLevel && report.identity.trimLevel !== 'סטנדרט' && (
+                  <div className="inline-flex items-center bg-slate-100 text-slate-700 px-3 py-1 rounded-xl text-xs font-bold">
                     רמת גימור {report.identity.trimLevel}
-                  </span>
+                  </div>
                 )}
               </div>
 
-              {/* Vehicle Title */}
-              <h1 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
+              {/* Main Hebrew Title */}
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight mb-1">
                 {report.identity.make} {report.identity.commercialName}
               </h1>
 
-              {report.identity.englishMake && (
-                <p className="text-sm text-slate-400 font-bold mt-0.5" dir="ltr">
-                  {report.identity.englishMake} {report.identity.englishCommercialName || ''} • {report.identity.model}
-                </p>
-              )}
+              {/* English Subtitle */}
+              <p className="text-xs sm:text-sm text-slate-500 font-medium" dir="ltr">
+                {report.identity.englishMake} {report.identity.englishCommercialName} 
+                {report.identity.engineCode ? ` • ${report.identity.engineCode}` : ''}
+              </p>
+
             </div>
 
             {/* Right Status Indicators */}
-            <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full lg:w-auto">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2.5 w-full lg:w-auto">
               
               {/* Test Status Pill */}
-              <div className={`flex-1 sm:flex-initial px-4 py-3 rounded-2xl border text-right whitespace-nowrap ${
+              <div className={`flex-1 sm:flex-initial px-4 py-3 rounded-2xl border text-right whitespace-nowrap shadow-soft-sm ${
                 isTestValid 
-                  ? 'bg-emerald-50/60 border-emerald-200/80' 
+                  ? 'bg-emerald-50/70 border-emerald-200/80' 
                   : 'bg-rose-50 border-rose-200'
               }`}>
                 <div className="text-[11px] font-semibold text-slate-500 mb-0.5">תוקף טסט (רישוי)</div>
                 <div className={`text-sm font-bold flex items-center gap-1.5 ${
-                  isTestValid ? 'text-emerald-700' : 'text-rose-700'
+                  isTestValid ? 'text-emerald-800' : 'text-rose-700'
                 }`}>
-                  {isTestValid ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
+                  {isTestValid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
                   <span>{isTestValid ? `עד ${report.identity.registrationValidity}` : 'פג תוקף'}</span>
                 </div>
               </div>
 
               {/* Recall Status Pill */}
-              <div className={`flex-1 sm:flex-initial px-4 py-3 rounded-2xl border text-right whitespace-nowrap ${
+              <div className={`flex-1 sm:flex-initial px-4 py-3 rounded-2xl border text-right whitespace-nowrap shadow-soft-sm ${
                 report.recalls.hasActiveRecall 
                   ? 'bg-rose-50 border-rose-200' 
                   : 'bg-[#f7f8fc] border-slate-200/70'
@@ -251,7 +278,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </div>
 
               {/* Ownership Origin Pill */}
-              <div className="flex-1 sm:flex-initial px-4 py-3 rounded-2xl border border-slate-200/70 bg-[#f7f8fc] text-right whitespace-nowrap">
+              <div className="flex-1 sm:flex-initial px-4 py-3 rounded-2xl border border-slate-200/70 bg-[#f7f8fc] text-right whitespace-nowrap shadow-soft-sm">
                 <div className="text-[11px] font-semibold text-slate-500 mb-0.5">מקוריות ובעלות</div>
                 <div className="text-sm font-bold text-slate-900">
                   {report.identity.ownershipDetails.originalHandOrigin}
@@ -262,7 +289,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
           </div>
 
-          {/* Bottom Row: 4 Clean Key Metrics (Matching Reference Card) */}
+          {/* Bottom Row: 4 Key Metrics Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 pt-6 text-center">
             
             <div className="py-2 sm:py-0 px-3">
@@ -274,7 +301,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   ? report.specs.engine.displacementCc.toLocaleString() 
                   : 'חשמלי'}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-slate-400 font-medium">
                 {report.specs.engine.displacementCc > 0 ? 'סמ"ק' : 'הנעה חשמלית'}
               </div>
             </div>
@@ -286,7 +313,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
                 {report.specs.engine.horsepower > 0 ? report.specs.engine.horsepower : '—'}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-slate-400 font-medium">
                 כוחות סוס
               </div>
             </div>
@@ -300,7 +327,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   ? `${report.fuel.officialElectricRangeKm || 420}` 
                   : (report.fuel.combinedLitersPer100Km || '—')}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-slate-400 font-medium">
                 {isElectric ? 'ק"מ טווח משוער' : 'ליטר ל-100 ק"מ'}
               </div>
             </div>
@@ -314,19 +341,19 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   ? report.history.mileageAnalysis.actualKm.toLocaleString() 
                   : 'לא דווח'}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-slate-400 font-medium">
                 ק"מ בטסט אחרון
               </div>
             </div>
 
           </div>
 
-        </div>
+        </motion.div>
 
         {/* =========================================================
-            5 PILLAR NAVIGATION BAR
+            5 PILLAR NAVIGATION BAR (With Sliding Framer Motion Indicator)
            ========================================================= */}
-        <div className="sticky top-18 z-30 bg-white/90 backdrop-blur-md rounded-2xl p-1.5 shadow-card border border-slate-100 mb-8 no-print overflow-x-auto">
+        <div className="sticky top-18 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-1.5 shadow-card border border-slate-100 mb-8 no-print overflow-x-auto">
           <div className="flex items-center justify-between gap-1 min-w-max">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -336,14 +363,21 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   key={item.id}
                   type="button"
                   onClick={() => scrollToSection(item.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all focus:outline-none ${
                     isActive 
-                      ? 'bg-brand-600 text-white shadow-sm' 
+                      ? 'text-white' 
                       : 'text-slate-600 hover:text-slate-950 hover:bg-[#f7f8fc]'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabPill"
+                      className="absolute inset-0 bg-brand-600 rounded-xl shadow-btn-primary"
+                      transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                    />
+                  )}
+                  <Icon className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">{item.label}</span>
                 </button>
               );
             })}
@@ -356,9 +390,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
         <div className="space-y-8">
           
           {/* 1. פרטי הרכב ומפרט טכני (#identity) */}
-          <section id="identity" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 scroll-mt-28">
+          <section id="identity" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
                 <Car className="w-5 h-5" />
               </div>
               <div>
@@ -370,59 +404,59 @@ export const ReportView: React.FC<ReportViewProps> = ({
             {/* Specs Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 text-sm mb-8">
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">יצרן ודגם</span>
+                <span className="text-xs text-slate-400 block mb-1">יצרן ודגם</span>
                 <span className="font-bold text-slate-950">{report.identity.make} {report.identity.commercialName}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">רמת גימור</span>
+                <span className="text-xs text-slate-400 block mb-1">רמת גימור</span>
                 <span className="font-bold text-slate-950">{report.identity.trimLevel}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">שנת ייצור ועלייה לכביש</span>
+                <span className="text-xs text-slate-400 block mb-1">שנת ייצור ועלייה לכביש</span>
                 <span className="font-bold text-slate-950">{report.identity.modelYear} ({report.identity.firstRegistrationDate})</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">ארץ ייצור</span>
+                <span className="text-xs text-slate-400 block mb-1">ארץ ייצור</span>
                 <span className="font-bold text-slate-950">{report.identity.countryOfOrigin || 'לא צוין'}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">סוג הנעה ודלק</span>
+                <span className="text-xs text-slate-400 block mb-1">סוג הנעה ודלק</span>
                 <span className="font-bold text-slate-950">{report.identity.fuelType}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">תיבת הילוכים</span>
+                <span className="text-xs text-slate-400 block mb-1">תיבת הילוכים</span>
                 <span className="font-bold text-slate-950">{report.specs.transmission.type}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">קוד מנוע ותזמון</span>
+                <span className="text-xs text-slate-400 block mb-1">קוד מנוע ותזמון</span>
                 <span className="font-bold text-slate-950" dir="ltr">
                   {report.identity.engineCode} ({report.specs.engine.timingType || 'סטנדרט'})
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">צבע הרכב</span>
+                <span className="text-xs text-slate-400 block mb-1">צבע הרכב</span>
                 <span className="font-bold text-slate-950">{report.identity.color}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">מרכב ודלתות</span>
+                <span className="text-xs text-slate-400 block mb-1">מרכב ודלתות</span>
                 <span className="font-bold text-slate-950">{report.identity.bodyStyle} ({report.identity.doorsCount} דלתות)</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">מידת צמיגים מאושרת</span>
+                <span className="text-xs text-slate-400 block mb-1">מידת צמיגים מאושרת</span>
                 <span className="font-bold text-slate-950 font-mono text-xs" dir="ltr">{report.identity.frontTire}</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">משקל כולל / כושר גרירה</span>
+                <span className="text-xs text-slate-400 block mb-1">משקל כולל / כושר גרירה</span>
                 <span className="font-bold text-slate-950">
                   {report.specs.performance.grossWeightKg ? `${report.specs.performance.grossWeightKg} ק"ג` : 'לא צוין'}
                   {report.specs.performance.towingCapacityBrakedKg ? ` (גרירה: ${report.specs.performance.towingCapacityBrakedKg} ק"ג)` : ''}
@@ -430,7 +464,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </div>
 
               <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-500 block mb-1">מספר שלדה (VIN ממוסך)</span>
+                <span className="text-xs text-slate-400 block mb-1">מספר שלדה (VIN ממוסך)</span>
                 <span className="font-bold text-slate-950 font-mono text-xs" dir="ltr">{report.identity.vinMasked || 'לא צוין'}</span>
               </div>
             </div>
@@ -442,7 +476,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   <ShieldCheck className="w-4 h-4 text-brand-600" />
                   <span>אבזור ומערכות בטיחות מקוריות</span>
                 </h3>
-                <span className="text-xs font-bold bg-white text-brand-700 px-3 py-1 rounded-lg border border-slate-200/70">
+                <span className="text-xs font-bold bg-white text-brand-700 px-3 py-1 rounded-xl border border-slate-200/70">
                   {report.specs.safety.airbagsCount} כריות אוויר • רמת אבזור בטיחותי {report.specs.safety.safetyEquipmentLevel}/8
                 </span>
               </div>
@@ -460,9 +494,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
                 ].map((sys, idx) => (
                   <div 
                     key={idx}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border ${
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
                       sys.active 
-                        ? 'bg-white border-slate-200/80 text-slate-900 font-semibold' 
+                        ? 'bg-white border-slate-200/80 text-slate-900 font-semibold shadow-soft-sm' 
                         : 'bg-slate-100/50 border-transparent text-slate-400'
                     }`}
                   >
@@ -479,9 +513,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
           </section>
 
           {/* 2. צריכת דלק וביצועים (#fuel) */}
-          <section id="fuel" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 scroll-mt-28">
+          <section id="fuel" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
                 <BarChart3 className="w-5 h-5" />
               </div>
               <div>
@@ -492,7 +526,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
             {!isElectric && report.fuel.combinedLitersPer100Km && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center">
-                <div className="p-5 rounded-2xl bg-brand-50/70 border border-brand-100">
+                <div className="p-5 rounded-2xl bg-[#f0f1ff] border border-brand-100">
                   <span className="text-xs font-bold text-brand-700 block mb-1">צריכה משולבת רשמית</span>
                   <div className="text-3xl font-black text-slate-950 font-mono">
                     {report.fuel.combinedKmPerLiter} <span className="text-sm font-bold text-slate-600">ק"מ/ל׳</span>
@@ -503,7 +537,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                 </div>
 
                 <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                  <span className="text-xs font-semibold text-slate-500 block mb-1">נסיעה עירונית</span>
+                  <span className="text-xs font-semibold text-slate-400 block mb-1">נסיעה עירונית</span>
                   <div className="text-2xl font-black text-slate-900 font-mono">
                     {report.fuel.cityLitersPer100Km} <span className="text-xs font-normal text-slate-500">ל׳/100 ק"מ</span>
                   </div>
@@ -513,7 +547,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                 </div>
 
                 <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                  <span className="text-xs font-semibold text-slate-500 block mb-1">נסיעה בין-עירונית</span>
+                  <span className="text-xs font-semibold text-slate-400 block mb-1">נסיעה בין-עירונית</span>
                   <div className="text-2xl font-black text-slate-900 font-mono">
                     {report.fuel.highwayLitersPer100Km} <span className="text-xs font-normal text-slate-500">ל׳/100 ק"מ</span>
                   </div>
@@ -531,9 +565,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
           </section>
 
           {/* 3. תקלות, ריקולים ושגרת טיפולים (#problems) */}
-          <section id="problems" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 scroll-mt-28">
+          <section id="problems" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
                 <Wrench className="w-5 h-5" />
               </div>
               <div>
@@ -559,7 +593,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="mb-6 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-4">
+              <div className="mb-6 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-4 shadow-soft-sm">
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div className="text-xs sm:text-sm">
@@ -580,7 +614,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                 return (
                   <div 
                     key={prob.id}
-                    className="rounded-2xl border border-slate-200/80 overflow-hidden transition-all"
+                    className="rounded-2xl border border-slate-200/80 overflow-hidden transition-all shadow-soft-sm"
                   >
                     <button
                       type="button"
@@ -599,26 +633,35 @@ export const ReportView: React.FC<ReportViewProps> = ({
                       </div>
                     </button>
 
-                    {isExpanded && (
-                      <div className="p-4 sm:p-5 bg-white border-t border-slate-100 text-xs sm:text-sm space-y-3">
-                        <p className="text-slate-700 leading-relaxed">{prob.description}</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                          <div className="p-3 rounded-xl bg-[#f7f8fc]">
-                            <span className="font-bold text-slate-900 block mb-1">תסמינים בבדיקה:</span>
-                            <ul className="list-disc list-inside text-slate-600 space-y-0.5">
-                              {prob.symptoms.map((s, i) => <li key={i}>{s}</li>)}
-                            </ul>
-                          </div>
-                          <div className="p-3 rounded-xl bg-[#f7f8fc]">
-                            <span className="font-bold text-slate-900 block mb-1">אומדן תיקון במוסך:</span>
-                            <div className="font-black text-base text-brand-600 font-mono">
-                              ₪{prob.estimatedCostIls.min.toLocaleString()} – ₪{prob.estimatedCostIls.max.toLocaleString()}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        >
+                          <div className="p-4 sm:p-5 bg-white border-t border-slate-100 text-xs sm:text-sm space-y-3">
+                            <p className="text-slate-700 leading-relaxed">{prob.description}</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                              <div className="p-3.5 rounded-xl bg-[#f7f8fc]">
+                                <span className="font-bold text-slate-900 block mb-1">תסמינים בבדיקה:</span>
+                                <ul className="list-disc list-inside text-slate-600 space-y-0.5">
+                                  {prob.symptoms.map((s, i) => <li key={i}>{s}</li>)}
+                                </ul>
+                              </div>
+                              <div className="p-3.5 rounded-xl bg-[#f7f8fc]">
+                                <span className="font-bold text-slate-900 block mb-1">אומדן תיקון במוסך:</span>
+                                <div className="font-black text-base text-brand-600 font-mono">
+                                  ₪{prob.estimatedCostIls.min.toLocaleString()} – ₪{prob.estimatedCostIls.max.toLocaleString()}
+                                </div>
+                                <span className="text-[11px] text-slate-500">מומלץ לבדוק היסטוריית החלפה מול המוכר</span>
+                              </div>
                             </div>
-                            <span className="text-[11px] text-slate-500">מומלץ לבדוק היסטוריית החלפה מול המוכר</span>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 );
               })}
@@ -629,7 +672,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <h3 className="text-sm font-extrabold text-slate-950">שגרת טיפולים מומלצת ותקן שמן</h3>
                 {report.maintenance.recommendedOilSpec && (
-                  <span className="text-xs font-bold text-brand-700 bg-white px-3 py-1 rounded-lg border border-slate-200/70" dir="ltr">
+                  <span className="text-xs font-bold text-brand-700 bg-white px-3 py-1 rounded-xl border border-slate-200/70" dir="ltr">
                     Oil Spec: {report.maintenance.recommendedOilSpec}
                   </span>
                 )}
@@ -637,7 +680,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
                 {report.maintenance.schedule.slice(0, 6).map((m, idx) => (
-                  <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200/60 flex flex-col justify-between">
+                  <div key={idx} className="bg-white p-3.5 rounded-xl border border-slate-200/60 flex flex-col justify-between shadow-soft-sm">
                     <div className="font-bold text-slate-900 mb-1">{m.item}</div>
                     <div className="text-brand-600 font-semibold">
                       כל {m.intervalKm.toLocaleString()} ק"מ או {m.intervalMonths} חודשים
@@ -649,9 +692,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
           </section>
 
           {/* 4. היסטוריית הרכב ובעלות (#history) */}
-          <section id="history" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 scroll-mt-28">
+          <section id="history" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
@@ -664,7 +707,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               
               {/* Mileage Box */}
               <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs font-bold text-slate-500 block mb-1">קילומטראז׳ במבחן הרישוי האחרון</span>
+                <span className="text-xs font-bold text-slate-400 block mb-1">קילומטראז׳ במבחן הרישוי האחרון</span>
                 <div className="text-2xl font-black text-slate-950 font-mono mb-1">
                   {report.history.mileageAnalysis?.actualKm 
                     ? `${report.history.mileageAnalysis.actualKm.toLocaleString()} ק"מ` 
@@ -677,7 +720,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
               {/* Ownership Origin Box */}
               <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs font-bold text-slate-500 block mb-1">מקוריות רישום ראשונה ובעלות</span>
+                <span className="text-xs font-bold text-slate-400 block mb-1">מקוריות רישום ראשונה ובעלות</span>
                 <div className="text-lg font-black text-slate-950 mb-1">
                   מקוריות: {report.identity.ownershipDetails.originalHandOrigin} • כיום: {report.identity.ownershipDetails.currentCategory}
                 </div>
@@ -709,9 +752,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
           </section>
 
           {/* 5. שווי שוק, עלויות ובדיקות חובה לפני קנייה (#market) */}
-          <section id="market" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 scroll-mt-28">
+          <section id="market" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
                 <Scale className="w-5 h-5" />
               </div>
               <div>
@@ -722,7 +765,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
             {/* Market Price Impact + Licensing Group */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="sm:col-span-2 p-5 rounded-2xl bg-brand-50/60 border border-brand-100">
+              <div className="sm:col-span-2 p-5 rounded-2xl bg-[#f0f1ff] border border-brand-100">
                 <span className="text-xs font-bold text-brand-700 block mb-1">השפעת מקוריות על שווי השוק והמחירון</span>
                 <div className="text-sm sm:text-base font-bold text-slate-950 leading-relaxed">
                   {report.identity.ownershipDetails.resalePriceImpact}
@@ -733,11 +776,11 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </div>
 
               <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100 flex flex-col justify-center text-center">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">אגרת רישוי שנתית (קבוצה {report.costs.licensingGroup})</span>
+                <span className="text-xs font-semibold text-slate-400 block mb-1">אגרת רישוי שנתית (קבוצה {report.costs.licensingGroup})</span>
                 <div className="text-2xl font-black text-slate-950 font-mono">
                   ₪{report.costs.annualLicensingFeeIls.toLocaleString()}
                 </div>
-                <span className="text-[11px] text-slate-500 mt-1">לפי תעריף משרד התחבורה</span>
+                <span className="text-[11px] text-slate-400 mt-1">לפי תעריף משרד התחבורה</span>
               </div>
             </div>
 
@@ -747,11 +790,11 @@ export const ReportView: React.FC<ReportViewProps> = ({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8 text-xs">
               {report.buyerDecision.officialRegistryChecks.map((check, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/70 flex flex-col justify-between">
+                <div key={idx} className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/70 flex flex-col justify-between shadow-soft-sm">
                   <div>
                     <div className="flex justify-between items-center mb-1 font-bold text-slate-950 text-sm">
                       <span>{check.title}</span>
-                      <span className="text-xs text-brand-600 bg-white px-2 py-0.5 rounded-md border border-slate-200/70">{check.cost}</span>
+                      <span className="text-xs text-brand-600 bg-white px-2 py-0.5 rounded-lg border border-slate-200/70">{check.cost}</span>
                     </div>
                     <p className="text-slate-600 leading-relaxed mt-1">{check.description}</p>
                   </div>
@@ -759,7 +802,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                     href={check.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 bg-white hover:bg-brand-600 text-slate-900 hover:text-white border border-slate-200/80 hover:border-brand-600 rounded-xl font-bold text-xs transition-all shadow-sm"
+                    className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 bg-white hover:bg-brand-600 text-slate-900 hover:text-white border border-slate-200/80 hover:border-brand-600 rounded-xl font-bold text-xs transition-all shadow-soft-sm"
                   >
                     <span>למעבר לשירות הרשמי</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -776,7 +819,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                 {report.buyerDecision.sellerQuestionsScript.slice(0, 4).map((q, i) => (
-                  <div key={i} className="p-3.5 rounded-xl bg-white border border-slate-200/60">
+                  <div key={i} className="p-3.5 rounded-xl bg-white border border-slate-200/60 shadow-soft-sm">
                     <div className="font-bold text-slate-950 mb-1">"{q.question}"</div>
                     <div className="text-slate-500">{q.reason}</div>
                   </div>
