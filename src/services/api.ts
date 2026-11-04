@@ -18,6 +18,8 @@ const SHINUI_MIVNE_1 = '56063a99-8a3e-4ff4-912e-5966c0279bad';
 const SHINUI_MIVNE_2 = 'bb2355dc-9ec7-4f06-9c3f-3344672171da';
 const HAGBALAT_RECALL_RESOURCE = '36bf1404-0be4-49d2-82dc-2f1ead4a8b93';
 const RECALL_RESOURCE = '2c33523f-87aa-44ec-a736-edbb0a82975e';
+const PUBLIC_VEHICLES_RESOURCE = 'cf29862d-ca25-4691-84f6-1be60dcb4a1e';
+const CANCELLED_VEHICLES_RESOURCE = '851ecab1-0622-4dbe-a6c7-f950cf82abf9';
 
 export function normalizePlate(input: string): string {
   return input.replace(/\D/g, '').trim();
@@ -198,8 +200,19 @@ export async function fetchVehicleReport(
   // Step 2, 3, 4, 5: Parallel queries
   onProgress?.('מצליב נתוני דגם WLTP, היסטוריה וריקולים...', 45);
 
-  const [wltpRecords, shinuiRecords, hagbalatRecalls, modelRecalls] = await Promise.all([
-    // WLTP model lookup
+  // Parallel queries to official databases
+  onProgress?.('מצליב נתוני בעלויות, WLTP, היסטוריה וקריאות שירות...', 45);
+
+  const [
+    wltpRecords, 
+    shinui1Records, 
+    ownershipHistoryRecords, 
+    hagbalatRecalls, 
+    modelRecalls,
+    publicVehicleRecords,
+    cancelledVehicleRecords
+  ] = await Promise.all([
+    // 1. WLTP model specs lookup
     (async () => {
       if (!tozeretCd || !degemCd) return [];
       let records = await queryDatastoreSql(
@@ -211,23 +224,29 @@ export async function fetchVehicleReport(
       return records;
     })(),
 
-    // Shinui Mivne / Mileage lookup
+    // 2. Shinui Mivne 1: Test mileage, structural changes, original ownership
     (async () => {
       let records = await queryDatastoreSql(
         `SELECT * FROM "${SHINUI_MIVNE_1}" WHERE mispar_rechev = ${plateNum} LIMIT 1`
       );
-      if (!records.length) {
-        records = await queryDatastoreSql(
-          `SELECT * FROM "${SHINUI_MIVNE_2}" WHERE mispar_rechev = ${plateNum} LIMIT 1`
-        );
-      }
       if (!records.length) {
         records = await queryDatastoreSearch(SHINUI_MIVNE_1, { mispar_rechev: plateNum });
       }
       return records;
     })(),
 
-    // Hagbalat recall lookup (uncompleted recalls)
+    // 3. Shinui Mivne 2: Complete chronological ownership transfer history (כל העברות הבעלות מ-2017)
+    (async () => {
+      let records = await queryDatastoreSql(
+        `SELECT * FROM "${SHINUI_MIVNE_2}" WHERE mispar_rechev = ${plateNum} ORDER BY baalut_dt ASC`
+      );
+      if (!records.length) {
+        records = await queryDatastoreSearch(SHINUI_MIVNE_2, { mispar_rechev: plateNum });
+      }
+      return records;
+    })(),
+
+    // 4. Hagbalat recall lookup (uncompleted recalls on this vehicle)
     (async () => {
       let records = await queryDatastoreSql(
         `SELECT * FROM "${HAGBALAT_RECALL_RESOURCE}" WHERE MISPAR_RECHEV = ${plateNum}`
@@ -241,7 +260,7 @@ export async function fetchVehicleReport(
       return records;
     })(),
 
-    // General Model Recalls lookup
+    // 5. General Model Recalls lookup
     (async () => {
       const tozeretNm = (activeRec.tozeret_nm || '').split(' ')[0];
       const modelWord = (activeRec.kinuy_mishari || activeRec.degem_nm || '').split(' ')[0];
@@ -250,6 +269,28 @@ export async function fetchVehicleReport(
       let records = await queryDatastoreSql(
         `SELECT * FROM "${RECALL_RESOURCE}" WHERE TOZAR_TEUR ILIKE '%${tozeretNm}%' OR DEGEM ILIKE '%${modelWord}%' LIMIT 8`
       );
+      return records;
+    })(),
+
+    // 6. Check if registered in Public Vehicle registry (Taxi, Tour, Bus, etc.)
+    (async () => {
+      let records = await queryDatastoreSql(
+        `SELECT * FROM "${PUBLIC_VEHICLES_RESOURCE}" WHERE mispar_rechev = ${plateNum} LIMIT 1`
+      );
+      if (!records.length) {
+        records = await queryDatastoreSearch(PUBLIC_VEHICLES_RESOURCE, { mispar_rechev: plateNum });
+      }
+      return records;
+    })(),
+
+    // 7. Check if registered in Cancelled / Total Loss registry
+    (async () => {
+      let records = await queryDatastoreSql(
+        `SELECT * FROM "${CANCELLED_VEHICLES_RESOURCE}" WHERE mispar_rechev = ${plateNum} LIMIT 1`
+      );
+      if (!records.length) {
+        records = await queryDatastoreSearch(CANCELLED_VEHICLES_RESOURCE, { mispar_rechev: plateNum });
+      }
       return records;
     })()
   ]);
@@ -270,32 +311,11 @@ export async function fetchVehicleReport(
     });
   }
 
-  const shinui = shinuiRecords[0] || {};
-  if (shinuiRecords.length > 0) {
-    sources.push({
-      id: SHINUI_MIVNE_1,
-      name: 'מאגר היסטוריית כלי רכב ושינויי מבנה - משרד התחבורה',
-      category: 'government',
-      url: 'https://data.gov.il/he/datasets/ministry_of_transport/shinui_mivne',
-      fieldsSupplied: ['קילומטראז בטסט אחרון', 'שינויי מבנה', 'שינוי צבע', 'שינוי מידת צמיג', 'הסבה לגפ"מ', 'מקוריות בעלות'],
-      lastSync: nowStr,
-      confidence: 'OFFICIAL',
-      status: 'connected'
-    });
-  }
-
-  sources.push({
-    id: HAGBALAT_RECALL_RESOURCE,
-    name: 'מאגר הגבלות וקריאות שירות (ריקול) פתוחות - משרד התחבורה',
-    category: 'government',
-    url: 'https://data.gov.il/he/datasets/ministry_of_transport/hagbalat_recall',
-    fieldsSupplied: ['ריקולים פתוחים ספציפיים לרכב', 'תיאור תקלת ריקול', 'תאריך פתיחה'],
-    lastSync: nowStr,
-    confidence: 'OFFICIAL',
-    status: 'connected'
-  });
-
-  onProgress?.('מפעיל מנוע מודיעין מכני ובונה את דוח הרכב...', 90);
+  const shinui = shinui1Records[0] || {};
+  const isPublicVehicle = publicVehicleRecords.length > 0;
+  const isCancelled = cancelledVehicleRecords.length > 0;
+  const publicType = isPublicVehicle ? (publicVehicleRecords[0].sug_rechev_nm || 'רכב ציבורי') : undefined;
+  const cancellationDate = isCancelled ? (cancelledVehicleRecords[0].bitul_dt || 'תאריך לא צוין') : undefined;
 
   // Map & normalize fields into clean, authoritative Israeli automotive terminology
   const normMake = normalizeMake(activeRec.tozeret_nm, wltp.tozeret_eretz_nm);
@@ -327,19 +347,52 @@ export async function fetchVehicleReport(
     licensingGroup
   );
 
+  // Process verified chronological ownership timeline from Ministry of Transport (SHINUI_MIVNE_2)
+  const sortedOwnership = [...ownershipHistoryRecords].sort((a: any, b: any) => 
+    (a.baalut_dt || '').localeCompare(b.baalut_dt || '')
+  );
+
+  let currentHandCount = 0;
+  const ownershipTimeline = sortedOwnership.map((item: any, idx: number) => {
+    const isDealer = item.baalut === 'סוחר';
+    if (!isDealer) {
+      currentHandCount++;
+    }
+    let dateStr = item.baalut_dt || '';
+    if (dateStr.length === 6) {
+      dateStr = `${dateStr.slice(4, 6)}/${dateStr.slice(0, 4)}`;
+    }
+    return {
+      dateStr: dateStr || 'תאריך לא צוין',
+      rawDate: item.baalut_dt || '',
+      ownership: item.baalut || 'לא צוין',
+      isDealer,
+      handIndex: isDealer ? null : currentHandCount,
+      isCurrent: idx === sortedOwnership.length - 1
+    };
+  });
+
+  const actualHandNumber = Math.max(1, currentHandCount || 1);
+  const actualHandText = `יד ${actualHandNumber}`;
+  const previousOwnersCount = Math.max(0, actualHandNumber - 1);
+  const licenseRegistrationNote = `ברישיון הרכב רשום: 0${previousOwnersCount} בעלים קודמים`;
+
   // Ownership & Hand Intelligence
   const firstReg = activeRec.moed_aliya_lakvish || `${shnatYitzur}-01`;
+  const originalOrigin = shinui.mkoriut_nm || (ownershipTimeline[0]?.ownership) || activeRec.baalut || 'פרטי';
+  const currentOwner = activeRec.baalut || (ownershipTimeline[ownershipTimeline.length - 1]?.ownership) || 'פרטי';
+
   const ownershipDetails = {
-    currentCategory: normOwnership.currentOwnership,
-    originalHandOrigin: normOwnership.originalOwnership,
-    estimatedHandText: normOwnership.estimatedHandText,
-    estimatedHandMin: normOwnership.estimatedHandText.includes('1') ? 1 : 2,
-    estimatedHandMax: normOwnership.estimatedHandText.includes('3') ? 3 : 2,
-    estimatedHandExplanation: normOwnership.originalOwnershipDesc,
+    currentCategory: currentOwner,
+    originalHandOrigin: originalOrigin,
+    estimatedHandText: actualHandText,
+    estimatedHandMin: actualHandNumber,
+    estimatedHandMax: actualHandNumber,
+    estimatedHandExplanation: licenseRegistrationNote,
     resalePriceImpact: normOwnership.priceReductionWarning || 'מקוריות פרטית: שומרת על מחירון מלא ומבוקשת בשוק המשומשות.',
     howToVerifyDocument: [
-      'ברישיון הרכב המודפס המקורי: בדקו את סעיף "בעלים קודמים" (00 = יד 1, 01 = יד 2, 02 = יד 3, 03 = יד 4).',
-      'באזור האישי הממשלתי (Gov.il): בעל הרכב יכול להציג לכם את פירוט הבעלויות המלא והרשמי.'
+      `ברישיון הרכב המודפס המקורי: רשום "בעלים קודמים: 0${previousOwnersCount}" (שזה אומר יד ${actualHandNumber}).`,
+      'באזור האישי הממשלתי (Gov.il): בעל הרכב יכול להפיק פירוט בעלויות רשמי ומאומת.'
     ]
   };
 
@@ -521,9 +574,19 @@ export async function fetchVehicleReport(
       hasColorChange: shinui.shnui_zeva_ind === 1,
       hasTireSizeChange: shinui.shinui_zmig_ind === 1,
       hasLpgConversion: shinui.gapam_ind === 1,
-      originalOwnership: shinui.mkoriut_nm || activeRec.baalut || 'פרטי',
-      registrationStatus: isTestValid ? 'פעיל' : 'פג תוקף',
+      originalOwnership: originalOrigin,
+      currentOwnership: currentOwner,
+      registrationStatus: isCancelled ? 'מורד מהכביש' : (isTestValid ? 'פעיל' : 'פג תוקף'),
       inspectionDueMonths,
+      actualHandNumber,
+      actualHandText,
+      previousOwnersCount,
+      licenseRegistrationNote,
+      ownershipTimeline,
+      isPublicVehicleOrTaxi: isPublicVehicle,
+      publicVehicleType: publicType,
+      isCancelledOrTotalLoss: isCancelled,
+      cancellationDate,
       mileageAnalysis: lastKm ? {
         actualKm: lastKm,
         expectedKm: Math.round((2026 - shnatYitzur) * 17500),

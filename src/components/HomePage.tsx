@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Car, 
-  BarChart3, 
-  Wrench, 
+  ShieldCheck, 
+  Search, 
   Clock, 
-  Scale, 
-  ArrowLeft, 
-  ChevronDown, 
-  ChevronUp, 
-  Fuel, 
+  AlertTriangle, 
   Gauge, 
+  Users, 
+  CheckCircle2, 
+  ChevronDown, 
+  ChevronUp,
+  Car,
+  BarChart3,
+  Wrench,
+  Scale,
+  Fuel,
   Cpu,
-  Sparkles
+  Zap,
+  ArrowLeft,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LicensePlateInput } from './LicensePlateInput';
@@ -37,16 +43,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
       const items: RecentVehicle[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('autoscope_report_v3_')) {
+        if (key && key.startsWith('autoscope_report_')) {
           const raw = localStorage.getItem(key);
           if (raw) {
             const parsed = JSON.parse(raw);
-            if (parsed?.data?.identity) {
+            if (parsed?.identity && parsed?.plateNumber) {
               items.push({
-                plate: parsed.data.plateNumber,
-                title: `${parsed.data.identity.make} ${parsed.data.identity.commercialName}`,
-                year: parsed.data.identity.modelYear,
-                fuel: parsed.data.identity.fuelType,
+                plate: parsed.plateNumber,
+                title: `${parsed.identity.make} ${parsed.identity.commercialName}`,
+                year: parsed.identity.modelYear,
+                fuel: parsed.identity.fuelType,
               });
             }
           }
@@ -58,285 +64,339 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
     }
   }, []);
 
-  const featureCards = [
+  // 5 Quick Navigation Pills matching the reference mockup
+  const quickFeatureCards = [
     {
       icon: Car,
       title: 'פרטי הרכב',
-      subtitle: 'נתונים מלאים',
+      subtitle: 'נתונים מלאים'
     },
     {
       icon: BarChart3,
       title: 'צריכת דלק וביצועים',
-      subtitle: 'נתונים מדויקים',
+      subtitle: 'נתונים מדויקים'
     },
     {
       icon: Wrench,
       title: 'תקלות ובעיות נפוצות',
-      subtitle: 'מה חשוב לדעת',
+      subtitle: 'מה חשוב לדעת'
     },
     {
       icon: Clock,
       title: 'היסטוריית הרכב',
-      subtitle: 'עבר, תאונות וטיפולים',
+      subtitle: 'עבר, תאונות וטיפולים'
     },
     {
       icon: Scale,
       title: 'שווי שוק',
-      subtitle: 'הערך המעודכן',
-    },
+      subtitle: 'הערך המעודכן'
+    }
   ];
 
   const faqs = [
     {
-      q: 'איזה מידע מתקבל בבדיקת מספר רישוי ב-CarInfo?',
-      a: 'הבדיקה מרכזת נתוני אמת רשמיים ממאגרי משרד התחבורה ומדדי ה-WLTP: מפרט טכני מלא (הספק, נפח מנוע, תיבת הילוכים, מערכות בטיחות מקוריות), תוקף רישוי (טסט), קילומטראז׳ שנרשם במבחן הרישוי האחרון, מקוריות בעלות (פרטי, ליסינג, השכרה), קריאות שירות (ריקול) פתוחות, צריכת דלק אמיתית ומחלות דגם מוכרות.'
+      q: 'מהיכן נלקחים נתוני הרכב באתר CarInfo?',
+      a: 'כל המידע באתר נשלף ישירות בזמן אמת ממאגרי המידע הממשלתיים הפתוחים של משרד התחבורה (data.gov.il), לרבות מאגר כלי רכב פעילים, מאגר דגמי רכב ומדדי WLTP, מאגר היסטוריית בעלויות מ-2017 ומאגר קריאות שירות פתוחות.'
     },
     {
-      q: 'האם המידע מתעדכן בזמן אמת?',
-      a: 'כן. בכל בדיקה המערכת פונה ישירות למאגרי הממשלה (data.gov.il) ומצליבה מספר מאגרים במקביל כדי לוודא שמוצגים הנתונים הרשמיים המעודכנים ביותר ליום הבדיקה.'
+      q: 'איך מחושב מספר היד המדויק (ללא הערכות)?',
+      a: 'מספר היד נקבע לפי תיעוד העברות הבעלות הרשמי במשרד התחבורה. על פי תקנות התעבורה בישראל, העברת בעלות לסוחר רכב מורשה (הפקדת סוחר / תו סחר) אינה נספרת כיד נוספת במחירון. המערכת מחשבת את מספר הידיים בפועל ומציגה את הנתון בדיוק כפי שרשום ברישיון הרכב המודפס (מספר הבעלים הקודמים).'
     },
     {
-      q: 'איך מזהים אם הרכב היה במקור בליסינג או בהשכרה?',
-      a: 'בדוח הרכב מוצגת "מקוריות הרישום" כפי שדווחה בעת עליית הרכב לכביש (פרטי, החכר/ליסינג, השכרה או חברה), בליווי ניתוח ההשפעה של עבר זה על שווי השוק והמחירון.'
+      q: 'האם המאגר הממשלתי כולל היסטוריית תאונות?',
+      a: 'לא. משרד התחבורה אינו מפרסם היסטוריית תאונות או תביעות ביטוח. לצורך בדיקת עבר ביטוחי ותאונות חובה להפיק דוח ממרכז הסליקה של חברות הביטוח (מרכז הסליקה הישראלי), ולבצע בדיקה במכון בדיקה מורשה וניטרלי.'
     },
     {
-      q: 'האם השירות כרוך בתשלום או ברישום?',
-      a: 'הבדיקה חופשית לחלוטין לשימוש הציבור, ללא צורך בהרשמה וללא שמירת פרטים אישיים.'
+      q: 'איך מוודאים שהרכב אינו ממושכן או מעוקל?',
+      a: 'בדיקת משכונות מתבצעת באופן בלעדי ברשם המשכונות של משרד המשפטים (שירות מקוון רשמי בעלות אגרה ממשלתית של 10 ₪). מומלץ לבצע בדיקה זו לפני העברת תשלום או חתימה על זכרון דברים.'
     }
   ];
 
-  const focusPlateInput = () => {
-    const el = document.getElementById('license-plate-input');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => el.focus(), 300);
-    }
-  };
-
   return (
-    <div className="bg-[#f7f8fc] text-slate-900 min-h-screen overflow-x-hidden" dir="rtl">
+    <div className="bg-[#f7f8fc] text-slate-900 min-h-screen" dir="rtl">
       
       {/* =========================================================
-          HERO SECTION (Matching CarInfo Desktop & Mobile Reference)
+          HERO SECTION - Faithful Reproduction of CarInfo Reference
          ========================================================= */}
-      <section className="relative overflow-hidden bg-[#f7f8fc]">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#f8f9fe] via-[#f1f3fa] to-[#f7f8fc] pt-6 sm:pt-12 pb-14 sm:pb-20 border-b border-slate-200/60">
         
-        {/* Mobile Top Hero Image (Matches iPhone screen mockup) */}
-        <div className="sm:hidden relative h-56 w-full overflow-hidden">
-          <img
-            src="/hero-sedan.jpg"
-            alt="בדיקת רכב לפי מספר רישוי"
-            className="w-full h-full object-cover object-left select-none"
-          />
-          <div 
-            className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f7f8fc] via-[#f7f8fc]/80 to-transparent"
-            aria-hidden="true"
-          />
-        </div>
+        {/* Soft Ambient Glows */}
+        <div className="absolute top-10 right-1/4 w-72 h-72 bg-brand-400/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Desktop Hero Canvas */}
-        <div className="relative sm:min-h-[540px] lg:min-h-[580px] flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
           
-          {/* Desktop Full-Bleed Background Car Photo */}
-          <img
-            src="/hero-sedan.jpg"
-            alt="בדיקת רכב לפי מספר רישוי"
-            className="hidden sm:block absolute inset-0 w-full h-full object-cover object-center select-none"
-          />
+          {/* Mobile Car Visual Preview (Shown on small screens) */}
+          <div className="lg:hidden mb-6 rounded-2xl overflow-hidden shadow-lg border-2 border-white relative">
+            <img 
+              src="/hero-sedan.jpg" 
+              alt="רכב בבדיקה עם לוחית רישוי ישראלית" 
+              className="w-full h-44 object-cover object-center" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+            <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-slate-900 shadow-sm flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-brand-600" />
+              <span>נתונים רשמיים משרד התחבורה</span>
+            </div>
+          </div>
 
-          {/* Desktop Atmospheric Right-to-Left Gradient Overlay */}
-          <div 
-            className="hidden sm:block absolute inset-0 bg-gradient-to-l from-white/95 via-white/70 to-transparent"
-            aria-hidden="true"
-          />
-          <div 
-            className="hidden sm:block absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#f7f8fc] via-[#f7f8fc]/60 to-transparent"
-            aria-hidden="true"
-          />
-
-          {/* Hero Content Container */}
-          <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-8 pt-2 pb-14 sm:py-16">
-            <motion.div 
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-xl mr-0 ml-auto text-center sm:text-right"
-            >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+            
+            {/* Right Side: Headline, Subtitle, License Plate Search (RTL Start) */}
+            <div className="lg:col-span-7 text-right">
               
+              {/* Trust Badge */}
+              <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-md text-brand-700 px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-brand-200/80 shadow-soft-sm">
+                <span className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
+                <span>מאגרי משרד התחבורה הפתוחים (data.gov.il)</span>
+              </div>
+
               {/* Main Headline */}
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.12] mb-3.5 sm:mb-4">
-                <span className="block text-slate-950">מכירים את הרכב.</span>
-                <span className="block text-brand-600">באמת.</span>
+              <h1 className="text-4xl sm:text-6xl font-black text-slate-950 tracking-tight leading-[1.12] mb-3">
+                מכירים את הרכב.<br />
+                <span className="text-brand-600">באמת.</span>
               </h1>
 
               {/* Subtitle */}
-              <p className="text-base sm:text-xl text-slate-600 font-medium leading-relaxed mb-6 sm:mb-8">
-                כל המידע על הרכב במקום אחד
-                <br />
+              <p className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-6 sm:mb-8 max-w-lg">
+                כל המידע על הרכב במקום אחד.<br className="hidden sm:inline" />
                 מפרטים, היסטוריה, צריכת דלק, תקלות ועוד.
               </p>
 
-              {/* License Plate Search Bar */}
-              <LicensePlateInput 
-                onSearch={onSearch}
-                isLoading={isLoading}
-                variant="hero"
-              />
+              {/* Search Bar Capsule Component */}
+              <div className="max-w-xl">
+                <LicensePlateInput 
+                  onSearch={onSearch}
+                  isLoading={isLoading}
+                  variant="hero"
+                />
+              </div>
 
-            </motion.div>
+            </div>
+
+            {/* Left Side: Desktop Car Visual (RTL End) */}
+            <div className="hidden lg:block lg:col-span-5">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 group"
+              >
+                <img 
+                  src="/hero-sedan.jpg" 
+                  alt="בדיקת רכב לפי מספר רישוי - CarInfo" 
+                  className="w-full h-[380px] object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+                
+                <div className="absolute bottom-5 right-5 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl text-xs font-bold text-slate-900 shadow-card flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-brand-600" />
+                  <span>בדיקה רשמית לפי מספר רישוי בלבד</span>
+                </div>
+              </motion.div>
+            </div>
+
           </div>
 
         </div>
       </section>
 
       {/* =========================================================
-          5 FEATURE PILLAR CARDS ROW
+          5 QUICK FEATURE CARDS (Directly Under Hero)
          ========================================================= */}
-      <section className="relative z-20 -mt-6 sm:-mt-12 max-w-7xl mx-auto px-4 sm:px-8">
-        {/* Desktop: 5 Cards Row | Mobile: 2x2 Grid + 1 Bottom Card (Exact Mockup Match) */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
-          {featureCards.map((card, idx) => (
-            <motion.button
+      <section className="relative z-20 -mt-6 sm:-mt-8 max-w-7xl mx-auto px-4 sm:px-8 mb-12 sm:mb-16">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          {quickFeatureCards.map((item, idx) => (
+            <div
               key={idx}
-              whileHover={{ y: -6, transition: { type: 'spring', stiffness: 350 } }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={focusPlateInput}
-              className={`group bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-card hover:shadow-card-hover border border-white hover:border-brand-200/80 transition-all duration-300 flex flex-col items-center text-center focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                idx === 4 ? 'col-span-2 lg:col-span-1' : ''
-              }`}
+              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-soft-sm hover:shadow-card hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center justify-center gap-2 group cursor-default"
             >
-              <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-2xl bg-[#f0f1ff] group-hover:bg-brand-600 text-brand-600 group-hover:text-white flex items-center justify-center mb-3 transition-colors duration-300 shadow-sm">
-                <card.icon className="w-6 h-6 stroke-[2]" />
+              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-600 group-hover:text-white transition-all duration-300">
+                <item.icon className="w-5 h-5 stroke-[2]" />
               </div>
-              <h2 className="font-bold text-sm sm:text-base text-slate-900 mb-0.5">
-                {card.title}
-              </h2>
-              <p className="text-xs text-slate-400 font-normal">
-                {card.subtitle}
+              <h3 className="font-black text-xs sm:text-sm text-slate-900 mt-1">
+                {item.title}
+              </h3>
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                {item.subtitle}
               </p>
-            </motion.button>
+            </div>
           ))}
         </div>
       </section>
 
       {/* =========================================================
-          "מה תגלו בבדיקה?" - SAMPLE REPORT PREVIEW SECTION
+          SHOWCASE: "מה תגלו בבדיקה? תמונה מלאה של הרכב"
          ========================================================= */}
-      <section className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-8 relative">
-        
-        {/* Soft Lavender Background Glow Orb */}
-        <div 
-          className="absolute left-1/4 top-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-brand-300/30 to-brand-500/10 rounded-full blur-3xl pointer-events-none"
-          aria-hidden="true"
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center relative z-10">
+      <section className="py-8 sm:py-14 max-w-7xl mx-auto px-4 sm:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Left Column: Floating Perspective Vehicle Preview Card */}
-          <div className="lg:col-span-7">
-            <motion.div 
-              whileHover={{ y: -4 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl p-5 sm:p-7 shadow-card border border-white/80 relative overflow-hidden"
-            >
-              {/* Card Top: Car Image & Title */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-5 pb-6 border-b border-slate-100">
-                <div className="w-full sm:w-56 h-36 rounded-2xl overflow-hidden bg-slate-100 shrink-0 shadow-sm border border-slate-100">
-                  <img
-                    src="/corolla-card.jpg"
-                    alt="Toyota Corolla 2021"
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
+          {/* Right Column: Explanatory Content (RTL Start) */}
+          <div className="lg:col-span-6 text-right">
+            <div className="w-10 h-1 bg-brand-600 rounded-full mb-3" />
+            <span className="text-xs sm:text-sm font-bold text-brand-600 uppercase tracking-wide">
+              מה תגלו בבדיקה?
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-950 mt-1 mb-4">
+              תמונה מלאה של הרכב
+            </h2>
+            <p className="text-base text-slate-600 leading-relaxed mb-6">
+              מפרט טכני, נתוני ביצועים, היסטוריה, ותקלות נפוצות – הכל במקום אחד
+            </p>
 
-                <div className="text-center sm:text-right flex-1">
-                  <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mb-2">
-                    Toyota Corolla
-                  </h3>
-                  <div className="inline-flex items-center gap-2 bg-[#f0f1ff] text-brand-700 px-3.5 py-1 rounded-xl text-xs sm:text-sm font-bold border border-brand-100">
-                    <span>1.8 היברידי</span>
-                    <span>•</span>
-                    <span>2021</span>
-                  </div>
+            <div className="space-y-3.5 mb-8">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-sm block">אימות מספר יד רשמי מ-2017</strong>
+                  <span className="text-xs text-slate-500">ללא הערכות או ניחושים. סוחר רכב מורשה (תו סחר) אינו נספר כיד.</span>
                 </div>
               </div>
 
-              {/* Card Bottom: 3 Key Metrics Row */}
-              <div className="grid grid-cols-3 divide-x divide-x-reverse divide-slate-100 pt-6 text-center">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-sm block">קילומטראז׳ רשמי במבחן הרישוי האחרון</strong>
+                  <span className="text-xs text-slate-500">חשיפת נתון מד האוץ שנרשם במכון הטסטים להצלבה ומניעת זיופים.</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-sm block">קריאות שירות (ריקול) פתוחות</strong>
+                  <span className="text-xs text-slate-500">איתור תקלות בטיחות יצרן שלא בוצעו ועלולות למנוע העברת בעלות.</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 text-sm block">בדיקת רכב ציבורי והורדה מהכביש</strong>
+                  <span className="text-xs text-slate-500">זיהוי מוניות לשעבר והצלבה מול מאגר רכבים שירדו מהכביש (טוטאל לוס).</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onSearch('42822302')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-btn-primary hover:shadow-btn-hover transition-all"
+            >
+              <span>בדוק את טויוטה קורולה לדוגמה</span>
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Left Column: Sample Toyota Corolla Preview Card (RTL End) */}
+          <div className="lg:col-span-6">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              onClick={() => onSearch('42822302')}
+              className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-card hover:shadow-card-hover transition-all duration-300 cursor-pointer"
+            >
+              {/* Header with car photo & identity */}
+              <div className="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-slate-100">
+                <div className="w-full sm:w-48 h-32 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200/60">
+                  <img 
+                    src="/corolla-card.jpg" 
+                    alt="Toyota Corolla 2021 Hybrid" 
+                    className="w-full h-full object-cover object-center" 
+                  />
+                </div>
                 
-                {/* Metric 1: Displacement */}
-                <div className="px-2">
-                  <div className="flex justify-center text-brand-600 mb-1">
-                    <Cpu className="w-5 h-5 stroke-[2]" />
+                <div className="text-right flex-1 w-full">
+                  <div className="inline-block bg-[#f0f1ff] text-brand-700 font-bold text-xs px-3 py-1 rounded-xl mb-2">
+                    1.8 היברידי • 2021
                   </div>
-                  <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
+                  <h3 className="text-2xl font-black text-slate-950">
+                    Toyota Corolla
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    טויוטה קורולה סדאן • דגם E180
+                  </p>
+                </div>
+              </div>
+
+              {/* 3 Metric Pills matching reference design */}
+              <div className="grid grid-cols-3 gap-3 pt-6 text-center">
+                
+                <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+                  <Cpu className="w-4 h-4 text-brand-600 mx-auto mb-1" />
+                  <div className="text-lg sm:text-xl font-black text-slate-950 font-mono">
                     1,798
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
-                    סמ"ק
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    סמ״ק
                   </div>
                 </div>
 
-                {/* Metric 2: Horsepower */}
-                <div className="px-2">
-                  <div className="flex justify-center text-brand-600 mb-1">
-                    <Gauge className="w-5 h-5 stroke-[2]" />
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
+                <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+                  <Zap className="w-4 h-4 text-brand-600 mx-auto mb-1" />
+                  <div className="text-lg sm:text-xl font-black text-slate-950 font-mono">
                     122
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
+                  <div className="text-[11px] text-slate-500 font-medium">
                     כוחות סוס
                   </div>
                 </div>
 
-                {/* Metric 3: Fuel Economy */}
-                <div className="px-2">
-                  <div className="flex justify-center text-brand-600 mb-1">
-                    <Fuel className="w-5 h-5 stroke-[2]" />
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
+                <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+                  <Fuel className="w-4 h-4 text-brand-600 mx-auto mb-1" />
+                  <div className="text-lg sm:text-xl font-black text-slate-950 font-mono">
                     4.5
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
-                    ליטר ל-100 ק"מ
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    ליטר ל-100 ק״מ
                   </div>
                 </div>
 
               </div>
 
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-brand-600">
+                <span>לחץ לצפייה בדוח הרכב המלא של קורולה זו</span>
+                <span className="font-mono bg-[#f9d616] text-slate-950 px-2.5 py-0.5 rounded-md border border-slate-900/60" dir="ltr">
+                  42-822-30
+                </span>
+              </div>
             </motion.div>
           </div>
 
-          {/* Right Column: Section Headline & Explanation */}
-          <div className="lg:col-span-5 text-center sm:text-right">
-            
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 tracking-wide mb-2.5">
-              <Sparkles className="w-4 h-4" />
-              <span>מה תגלו בבדיקה?</span>
+        </div>
+      </section>
+
+      {/* =========================================================
+          WHAT IS NOT IN THE PUBLIC REGISTRY (Trust & Transparency)
+         ========================================================= */}
+      <section className="py-8 max-w-7xl mx-auto px-4 sm:px-8">
+        <div className="bg-amber-50/80 rounded-3xl p-6 sm:p-8 border border-amber-200/80">
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight leading-tight mb-4">
-              תמונה מלאה של הרכב
-            </h2>
-
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-6 font-normal">
-              מפרט טכני, נתוני ביצועים, היסטוריה, ותקלות נפוצות – הכל במקום אחד, מוגש בצורה בהירה ומדויקת.
-            </p>
-
-            <motion.button
-              whileHover={{ x: -4 }}
-              type="button"
-              onClick={() => onSearch('42822302')}
-              className="inline-flex items-center gap-2 text-brand-600 hover:text-brand-700 font-bold text-base sm:text-lg group"
-            >
-              <span>צפו בדוח לדוגמה: Toyota Corolla 2021</span>
-              <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-            </motion.button>
-
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-amber-950 mb-1.5">
+                חשוב לדעת: מה אינו מופיע במאגרי משרד התחבורה הפתוחים?
+              </h3>
+              <p className="text-xs sm:text-sm text-amber-900 leading-relaxed mb-4">
+                המאגר הממשלתי אינו כולל נתוני תאונות, תביעות ביטוח או שעבודים. לפני העברת תשלום על רכב יד שנייה חובה לבצע:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="bg-white/90 p-3.5 rounded-2xl border border-amber-200">
+                  <span className="font-bold text-slate-950 block mb-0.5">1. בדיקת משכון ועיקול</span>
+                  <span className="text-slate-600">הפקת דוח רשמי מרשם המשכונות (משרד המשפטים) – 10 ₪.</span>
+                </div>
+                <div className="bg-white/90 p-3.5 rounded-2xl border border-amber-200">
+                  <span className="font-bold text-slate-950 block mb-0.5">2. היסטוריית תביעות ביטוח</span>
+                  <span className="text-slate-600">הפקת דוח ממרכז הסליקה של חברות הביטוח לגילוי תאונות בעבר – 10 ₪.</span>
+                </div>
+                <div className="bg-white/90 p-3.5 rounded-2xl border border-amber-200">
+                  <span className="font-bold text-slate-950 block mb-0.5">3. בדיקה פיזית במכון</span>
+                  <span className="text-slate-600">בדיקת שלדה (שאסי), מנוע ומכלולים מכניים במכון מורשה וניטרלי.</span>
+                </div>
+              </div>
+            </div>
           </div>
-
         </div>
       </section>
 
@@ -344,11 +404,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
           RECENT VEHICLES SECTION (If any stored)
          ========================================================= */}
       {recentVehicles.length > 0 && (
-        <section id="recent-searches" className="py-10 max-w-7xl mx-auto px-4 sm:px-8">
+        <section id="recent-searches" className="py-8 max-w-7xl mx-auto px-4 sm:px-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Clock className="w-4 h-4 text-brand-600" />
-              <span>רכבים שחיפשת לאחרונה</span>
+              <span>רכבים שבדקת לאחרונה</span>
             </h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -359,7 +419,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => onSearch(v.plate)}
-                className="bg-white p-3.5 rounded-2xl shadow-soft-sm hover:shadow-card border border-slate-100 text-right flex items-center justify-between transition-all"
+                className="bg-white p-3.5 rounded-2xl shadow-soft-sm hover:shadow-card border border-slate-200/70 text-right flex items-center justify-between transition-all"
               >
                 <div>
                   <div className="font-bold text-xs sm:text-sm text-slate-900">{v.title}</div>
@@ -380,13 +440,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
       {/* =========================================================
           FAQ ACCORDION SECTION
          ========================================================= */}
-      <section id="faq-section" className="py-14 max-w-4xl mx-auto px-4 sm:px-8">
+      <section id="faq-section" className="py-12 max-w-4xl mx-auto px-4 sm:px-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-black text-slate-950 mb-2">
-            שאלות נפוצות
+            שאלות ותשובות נפוצות
           </h2>
           <p className="text-sm text-slate-500">
-            כל מה שחשוב לדעת על הפקת דוח הרכב ונתוני משרד התחבורה
+            הסברים מקצועיים על מאגרי הרישוי, בדיקת ידיים וקניית רכב יד שנייה
           </p>
         </div>
 
@@ -396,7 +456,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
             return (
               <div 
                 key={idx}
-                className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-soft-sm transition-all"
+                className="bg-white rounded-2xl border border-slate-200/70 overflow-hidden shadow-soft-sm transition-all"
               >
                 <button
                   type="button"
@@ -416,9 +476,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearch, isLoading }) => {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
                     >
-                      <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-50 pt-3">
+                      <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
                         {faq.a}
                       </div>
                     </motion.div>

@@ -178,7 +178,7 @@ export interface VehicleReportData {
     timingReplacementNotes?: string;
   };
 
-  // Section G: Ministry of Transport History
+  // Section G: Ministry of Transport History & Real Ownership
   history: {
     lastInspectionMileageKm?: number;
     hasStructuralModification: boolean;
@@ -186,8 +186,31 @@ export interface VehicleReportData {
     hasTireSizeChange: boolean;
     hasLpgConversion: boolean;
     originalOwnership: string;
+    currentOwnership: string;
     registrationStatus: 'בתוקף' | 'פג תוקף' | 'מורד מהכביש' | 'פעיל';
     inspectionDueMonths: number;
+    
+    // Official Ownership Timeline from Ministry of Transport (SHINUI_MIVNE_2)
+    actualHandNumber: number; // e.g. 2 for 2nd hand
+    actualHandText: string; // e.g. "יד 2"
+    previousOwnersCount: number; // e.g. 1
+    licenseRegistrationNote: string; // e.g. "ברישיון הרכב רשום: 01 בעלים קודמים"
+    averageHoldingDurationMonths?: number;
+    ownershipTimeline: {
+      dateStr: string; // "05/2021"
+      rawDate: string; // "202105"
+      ownership: string; // "החכר", "פרטי", "סוחר", "חברה"
+      isDealer: boolean; // תו סחר - אינו מוסיף יד
+      handIndex: number | null; // 1, 2, 3...
+      isCurrent: boolean;
+    }[];
+
+    // High Risk Flags
+    isPublicVehicleOrTaxi: boolean;
+    publicVehicleType?: string;
+    isCancelledOrTotalLoss: boolean;
+    cancellationDate?: string;
+
     mileageAnalysis?: {
       actualKm?: number;
       expectedKm: number;

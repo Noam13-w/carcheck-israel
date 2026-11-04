@@ -1,32 +1,30 @@
 import React, { useState } from 'react';
 import { 
   Car, 
-  BarChart3, 
-  Wrench, 
-  Clock, 
-  Scale, 
   ShieldCheck, 
   ShieldAlert, 
-  Fuel, 
-  Gauge, 
-  Cpu, 
+  AlertTriangle, 
   CheckCircle2, 
   XCircle, 
-  ChevronDown, 
-  ChevronUp, 
   Printer, 
   Share2, 
   ArrowRight, 
   ExternalLink, 
   RefreshCw,
-  HelpCircle,
+  Users,
+  Gauge,
+  Calendar,
+  FileText,
+  Fuel,
+  Cpu,
   Check,
-  Sparkles
+  Zap,
+  HelpCircle,
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { VehicleReportData, ProblemSeverity } from '../types/vehicle';
-import { FuelCostCalculator } from './FuelCostCalculator';
-import { formatPlateDisplay } from '../services/api';
+import { VehicleReportData } from '../types/vehicle';
 
 interface ReportViewProps {
   report: VehicleReportData;
@@ -41,13 +39,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
   onRefresh,
   isRefreshing = false 
 }) => {
-  const [activeTab, setActiveTab] = useState<string>('identity');
-  const [expandedProblem, setExpandedProblem] = useState<string | null>(
-    report.knownProblems[0]?.id || null
-  );
   const [copiedShare, setCopiedShare] = useState(false);
 
-  const isTestValid = report.history.registrationStatus === 'פעיל';
+  const isTestValid = report.history.registrationStatus === 'פעיל' || report.history.registrationStatus === 'בתוקף';
   const isElectric = report.specs.engine.displacementCc === 0 || report.identity.fuelType.includes('100% EV');
 
   const handlePrint = () => {
@@ -58,8 +52,8 @@ export const ReportView: React.FC<ReportViewProps> = ({
     const shareUrl = `${window.location.origin}/car/${report.plateNumber}`;
     if (navigator.share) {
       navigator.share({
-        title: `דוח רכב CarInfo - ${report.identity.make} ${report.identity.commercialName}`,
-        text: `דוח מפרט והיסטוריה לרכב מספר ${report.formattedPlate}`,
+        title: `דוח רכב CarInfo - ${report.identity.make} ${report.identity.commercialName} (${report.formattedPlate})`,
+        text: `דוח היסטוריה ומפרט מלא לרכב מספר ${report.formattedPlate}`,
         url: shareUrl,
       }).catch(() => {});
     } else {
@@ -69,87 +63,41 @@ export const ReportView: React.FC<ReportViewProps> = ({
     }
   };
 
-  const navItems = [
-    { id: 'identity', label: 'פרטי הרכב', icon: Car },
-    { id: 'fuel', label: 'צריכת דלק וביצועים', icon: BarChart3 },
-    { id: 'problems', label: 'תקלות וריקולים', icon: Wrench },
-    { id: 'history', label: 'היסטוריית הרכב', icon: Clock },
-    { id: 'market', label: 'שווי שוק ובדיקת קנייה', icon: Scale },
-  ];
-
-  const scrollToSection = (id: string) => {
-    setActiveTab(id);
-    const element = document.getElementById(id);
-    if (element) {
-      const yOffset = -90;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  };
-
-  const renderSeverityBadge = (severity: ProblemSeverity) => {
-    switch (severity) {
-      case 'critical':
-      case 'high':
-        return (
-          <span className="bg-rose-50 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-xl border border-rose-200">
-            חשיבות גבוהה לבדיקה
-          </span>
-        );
-      case 'medium':
-        return (
-          <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-xl border border-amber-200">
-            בלאי מוכר בדגם
-          </span>
-        );
-      default:
-        return (
-          <span className="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-xl border border-slate-200">
-            תחזוקה שוטפת
-          </span>
-        );
-    }
-  };
-
   return (
-    <div className="bg-[#f7f8fc] min-h-screen py-6 sm:py-10 px-4 sm:px-8" dir="rtl">
-      <div className="max-w-6xl mx-auto">
+    <div className="bg-[#f7f8fc] min-h-screen py-6 sm:py-10 px-4 sm:px-8 text-slate-900" dir="rtl">
+      <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* Top Floating Action Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 no-print">
-          <motion.button
-            whileHover={{ x: 3 }}
-            whileTap={{ scale: 0.98 }}
+        {/* =========================================================
+            TOP ACTION BAR (Breadcrumb + Actions)
+           ========================================================= */}
+        <div className="flex flex-wrap items-center justify-between gap-3 no-print">
+          <button
             type="button"
             onClick={onNewSearch}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-brand-600 transition-colors"
           >
             <ArrowRight className="w-4 h-4" />
-            <span>בדיקת רכב נוסף</span>
-          </motion.button>
+            <span>חזרה לחיפוש רכב אחר</span>
+          </button>
 
           <div className="flex items-center gap-2">
             {onRefresh && (
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <button
                 type="button"
                 onClick={() => onRefresh(report.plateNumber)}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 text-xs font-bold shadow-soft-sm transition-all"
-                title="רענן נתונים ישירות ממאגרי הממשלה"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-soft-sm transition-all"
+                title="רענון נתונים ישירות ממאגרי הממשלה"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-brand-600' : ''}`} />
                 <span>{isRefreshing ? 'מרענן...' : 'רענון נתונים'}</span>
-              </motion.button>
+              </button>
             )}
 
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 text-xs font-bold shadow-soft-sm transition-all relative"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-soft-sm transition-all relative"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>שיתוף</span>
@@ -165,670 +113,537 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   </motion.span>
                 )}
               </AnimatePresence>
-            </motion.button>
+            </button>
 
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 text-xs font-bold shadow-soft-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-soft-sm transition-all"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>הדפסה / PDF</span>
-            </motion.button>
+            </button>
           </div>
         </div>
 
         {/* =========================================================
-            HERO VEHICLE SUMMARY CARD
+            CRITICAL SAFETY ALERTS (If Triggered)
            ========================================================= */}
-        <motion.div 
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/90 mb-8 relative overflow-hidden"
-        >
-          
-          {/* Top Row: Plate + Badges + Vehicle Title */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
-            
-            {/* Left/Main Column: Vehicle Title & Identity */}
+        {report.history.isCancelledOrTotalLoss && (
+          <div className="bg-rose-50 border-2 border-rose-400 p-5 rounded-3xl text-rose-950 flex items-start gap-3.5 shadow-sm">
+            <AlertCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
             <div>
-              
-              {/* Badges Row */}
-              <div className="flex flex-wrap items-center gap-2.5 mb-3">
-                {/* Yellow License Plate Badge */}
-                <div 
-                  className="inline-flex items-center bg-[#f9d616] text-slate-950 font-black px-3 py-1 rounded-xl border-2 border-slate-900 shadow-plate text-sm sm:text-base font-mono"
-                  dir="ltr"
-                >
-                  <span className="text-[10px] bg-[#0038b8] text-white px-1.5 py-0.5 rounded mr-2 font-bold font-sans">IL</span>
-                  <span className="plate-font tracking-wider">{report.formattedPlate}</span>
-                </div>
+              <h3 className="font-black text-base text-rose-900">
+                אזהרה קריטית: רכב זה רשום במאגר הרכבים שירדו מהכביש בביטול סופי!
+              </h3>
+              <p className="text-xs sm:text-sm text-rose-800 mt-1 leading-relaxed">
+                רכב זה הוגדר כטוטאל לוס או ירד מהכביש לצמיתות (תאריך ביטול: {report.history.cancellationDate || 'לא צוין'}). חל איסור מוחלט על נסיעה או רכישה!
+              </p>
+            </div>
+          </div>
+        )}
 
-                {/* Powertrain Pill */}
-                <div className="inline-flex items-center gap-1.5 bg-[#f0f1ff] text-brand-700 px-3 py-1 rounded-xl text-xs sm:text-sm font-bold border border-brand-100">
-                  <span>{report.identity.fuelType}</span>
-                  <span>•</span>
-                  <span>{report.identity.modelYear}</span>
-                </div>
+        {report.history.isPublicVehicleOrTaxi && (
+          <div className="bg-amber-50 border-2 border-amber-400 p-5 rounded-3xl text-amber-950 flex items-start gap-3.5 shadow-sm">
+            <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-black text-base text-amber-900">
+                התראה: רכב זה רשום במאגר כלי הרכב הציבוריים ({report.history.publicVehicleType || 'מונית / רכב סיור'})!
+              </h3>
+              <p className="text-xs sm:text-sm text-amber-800 mt-1 leading-relaxed">
+                לרכבים ציבוריים לשעבר קיים בלאי גבוה מאוד ומשמעות כבדה על שווי השוק והמחירון (הפחתה של עד עשרות אחוזים).
+              </p>
+            </div>
+          </div>
+        )}
 
-                {/* Trim Level Pill */}
+        {report.recalls.hasActiveRecall && (
+          <div className="bg-rose-50 border-2 border-rose-300 p-5 rounded-3xl text-rose-950 flex items-start gap-3.5 shadow-sm">
+            <ShieldAlert className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-black text-base text-rose-900">
+                התראה: קיימת קריאת שירות (ריקול) פתוחה במשרד התחבורה!
+              </h3>
+              <p className="text-xs sm:text-sm text-rose-800 mt-1 leading-relaxed">
+                לרכב זה רשומה תקלת יצרן בטיחותית שלא בוצעה. על פי החוק בישראל, לא ניתן לחדש רישיון רכב או להעביר בעלות אם הריקול פתוח מעל 6 חודשים. התיקון מבוצע במוסכי היבואן ללא תשלום!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================
+            MAIN VEHICLE IDENTITY CARD
+           ========================================================= */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft-sm">
+          
+          {/* Top Row: Vehicle Title & Authentic Israeli Yellow Plate */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-brand-700 bg-[#f0f1ff] px-3 py-1 rounded-xl">
+                  {report.identity.fuelType} • {report.identity.modelYear}
+                </span>
                 {report.identity.trimLevel && report.identity.trimLevel !== 'סטנדרט' && (
-                  <div className="inline-flex items-center bg-slate-100 text-slate-700 px-3 py-1 rounded-xl text-xs font-bold">
-                    רמת גימור {report.identity.trimLevel}
-                  </div>
+                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl">
+                    גימור {report.identity.trimLevel}
+                  </span>
                 )}
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200/60 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>מאומת במשרד התחבורה</span>
+                </span>
               </div>
 
-              {/* Main Hebrew Title */}
-              <h1 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight mb-1">
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight">
                 {report.identity.make} {report.identity.commercialName}
               </h1>
 
-              {/* English Subtitle */}
-              <p className="text-xs sm:text-sm text-slate-500 font-medium" dir="ltr">
-                {report.identity.englishMake} {report.identity.englishCommercialName} 
-                {report.identity.engineCode ? ` • ${report.identity.engineCode}` : ''}
+              <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5" dir="ltr">
+                {report.identity.englishMake} {report.identity.englishCommercialName}
+                {report.identity.model ? ` (${report.identity.model})` : ''}
               </p>
-
             </div>
 
-            {/* Right Status Indicators */}
-            <div className="flex flex-wrap sm:flex-nowrap gap-2.5 w-full lg:w-auto">
-              
-              {/* Test Status Pill */}
-              <div className={`flex-1 sm:flex-initial px-4 py-3 rounded-2xl border text-right whitespace-nowrap shadow-soft-sm ${
-                isTestValid 
-                  ? 'bg-emerald-50/70 border-emerald-200/80' 
-                  : 'bg-rose-50 border-rose-200'
-              }`}>
-                <div className="text-[11px] font-semibold text-slate-500 mb-0.5">תוקף טסט (רישוי)</div>
-                <div className={`text-sm font-bold flex items-center gap-1.5 ${
-                  isTestValid ? 'text-emerald-800' : 'text-rose-700'
-                }`}>
-                  {isTestValid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
-                  <span>{isTestValid ? `עד ${report.identity.registrationValidity}` : 'פג תוקף'}</span>
-                </div>
+            {/* Authentic Israeli Yellow License Plate */}
+            <div 
+              className="inline-flex items-center bg-[#f9d616] text-slate-950 font-black px-4 py-2 rounded-2xl border-2 border-slate-900 shadow-plate text-xl sm:text-2xl shrink-0 self-start sm:self-auto"
+              dir="ltr"
+            >
+              <div className="text-[11px] bg-[#0038b8] text-white px-2 py-0.5 rounded mr-2.5 font-bold font-sans">
+                IL
               </div>
-
-              {/* Recall Status Pill */}
-              <div className={`flex-1 sm:flex-initial px-4 py-3 rounded-2xl border text-right whitespace-nowrap shadow-soft-sm ${
-                report.recalls.hasActiveRecall 
-                  ? 'bg-rose-50 border-rose-200' 
-                  : 'bg-[#f7f8fc] border-slate-200/70'
-              }`}>
-                <div className="text-[11px] font-semibold text-slate-500 mb-0.5">קריאות שירות (ריקול)</div>
-                <div className={`text-sm font-bold flex items-center gap-1.5 ${
-                  report.recalls.hasActiveRecall ? 'text-rose-700' : 'text-slate-800'
-                }`}>
-                  {report.recalls.hasActiveRecall ? (
-                    <>
-                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span>קיים ריקול פתוח</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>ללא ריקול פתוח</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Ownership Origin Pill */}
-              <div className="flex-1 sm:flex-initial px-4 py-3 rounded-2xl border border-slate-200/70 bg-[#f7f8fc] text-right whitespace-nowrap shadow-soft-sm">
-                <div className="text-[11px] font-semibold text-slate-500 mb-0.5">מקוריות ובעלות</div>
-                <div className="text-sm font-bold text-slate-900">
-                  {report.identity.ownershipDetails.originalHandOrigin}
-                </div>
-              </div>
-
+              <span className="plate-font tracking-widest">{report.formattedPlate}</span>
             </div>
-
           </div>
 
-          {/* Bottom Row: 4 Key Metrics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 pt-6 text-center">
+          {/* =========================================================
+              THE 4 CORE BUYER QUESTIONS (Exact, Verified, Non-AI)
+             ========================================================= */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
             
-            <div className="py-2 sm:py-0 px-3">
-              <div className="flex justify-center text-brand-600 mb-1.5">
-                <Cpu className="w-5 h-5 stroke-[2]" />
+            {/* 1. Actual Hand (No Estimates!) */}
+            <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/70 text-right flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-500 block mb-1">איזה יד הרכב?</span>
+                <div className="text-2xl sm:text-3xl font-black text-slate-950">
+                  {report.history.actualHandText}
+                </div>
               </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
-                {report.specs.engine.displacementCc > 0 
-                  ? report.specs.engine.displacementCc.toLocaleString() 
-                  : 'חשמלי'}
-              </div>
-              <div className="text-xs text-slate-400 font-medium">
-                {report.specs.engine.displacementCc > 0 ? 'סמ"ק' : 'הנעה חשמלית'}
-              </div>
-            </div>
-
-            <div className="py-2 sm:py-0 px-3">
-              <div className="flex justify-center text-brand-600 mb-1.5">
-                <Gauge className="w-5 h-5 stroke-[2]" />
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
-                {report.specs.engine.horsepower > 0 ? report.specs.engine.horsepower : '—'}
-              </div>
-              <div className="text-xs text-slate-400 font-medium">
-                כוחות סוס
+              <div className="mt-3 pt-2 border-t border-slate-200/50">
+                <span className="text-xs text-brand-700 font-bold block">
+                  {report.history.licenseRegistrationNote}
+                </span>
+                <span className="text-[11px] text-slate-400 mt-0.5 block">
+                  סוחר רכב מורשה אינו נספר כיד
+                </span>
               </div>
             </div>
 
-            <div className="py-2 sm:py-0 px-3">
-              <div className="flex justify-center text-brand-600 mb-1.5">
-                <Fuel className="w-5 h-5 stroke-[2]" />
+            {/* 2. Ownership & Origin */}
+            <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/70 text-right flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-500 block mb-1">בעלות ומקוריות</span>
+                <div className="text-lg sm:text-xl font-black text-slate-950 truncate">
+                  כיום {report.history.currentOwnership}
+                </div>
               </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
-                {isElectric 
-                  ? `${report.fuel.officialElectricRangeKm || 420}` 
-                  : (report.fuel.combinedLitersPer100Km || '—')}
-              </div>
-              <div className="text-xs text-slate-400 font-medium">
-                {isElectric ? 'ק"מ טווח משוער' : 'ליטר ל-100 ק"מ'}
+              <div className="mt-3 pt-2 border-t border-slate-200/50">
+                <span className="text-xs text-slate-600 block">
+                  מקוריות: <strong className="text-slate-900">{report.history.originalOwnership}</strong>
+                </span>
+                <span className="text-[11px] text-slate-400 mt-0.5 block">
+                  מועד עלייה: {report.identity.firstRegistrationDate}
+                </span>
               </div>
             </div>
 
-            <div className="py-2 sm:py-0 px-3">
-              <div className="flex justify-center text-brand-600 mb-1.5">
-                <Clock className="w-5 h-5 stroke-[2]" />
+            {/* 3. Official Test Mileage */}
+            <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/70 text-right flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-500 block mb-1">קילומטראז׳ בטסט אחרון</span>
+                <div className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">
+                  {report.history.lastInspectionMileageKm 
+                    ? report.history.lastInspectionMileageKm.toLocaleString() 
+                    : 'לא דווח'}
+                </div>
               </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono">
-                {report.history.mileageAnalysis?.actualKm 
-                  ? report.history.mileageAnalysis.actualKm.toLocaleString() 
-                  : 'לא דווח'}
+              <div className="mt-3 pt-2 border-t border-slate-200/50">
+                <span className="text-xs text-slate-500 block">
+                  {report.history.lastInspectionMileageKm ? `נרשם בטסט ב-${report.identity.lastInspectionDate}` : 'רכב חדש – עד 3 שנים'}
+                </span>
+                <span className="text-[11px] text-slate-400 mt-0.5 block">
+                  מד אוץ רשמי ממכון הרישוי
+                </span>
               </div>
-              <div className="text-xs text-slate-400 font-medium">
-                ק"מ בטסט אחרון
+            </div>
+
+            {/* 4. Test Registration Status */}
+            <div className={`p-4 rounded-2xl border text-right flex flex-col justify-between ${
+              isTestValid ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50 border-rose-200'
+            }`}>
+              <div>
+                <span className="text-xs font-bold text-slate-500 block mb-1">תוקף רישוי (טסט)</span>
+                <div className={`text-lg sm:text-xl font-black flex items-center gap-1.5 ${
+                  isTestValid ? 'text-emerald-900' : 'text-rose-900'
+                }`}>
+                  {isTestValid ? <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" /> : <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
+                  <span>{isTestValid ? 'בתוקף' : 'פג תוקף'}</span>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-emerald-200/50">
+                <span className="text-xs text-slate-700 block font-semibold">
+                  עד {report.identity.registrationValidity}
+                </span>
+                <span className="text-[11px] text-slate-500 mt-0.5 block">
+                  אגרת רישוי: קבוצה {report.costs.licensingGroup}
+                </span>
               </div>
             </div>
 
           </div>
 
-        </motion.div>
+        </div>
 
         {/* =========================================================
-            5 PILLAR NAVIGATION BAR (With Sliding Framer Motion Indicator)
+            PRE-PURCHASE SUMMARY & BUYER RECOMMENDATIONS
            ========================================================= */}
-        <div className="sticky top-18 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-1.5 shadow-card border border-slate-100 mb-8 no-print overflow-x-auto">
-          <div className="flex items-center justify-between gap-1 min-w-max">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => scrollToSection(item.id)}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all focus:outline-none ${
-                    isActive 
-                      ? 'text-white' 
-                      : 'text-slate-600 hover:text-slate-950 hover:bg-[#f7f8fc]'
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabPill"
-                      className="absolute inset-0 bg-brand-600 rounded-xl shadow-btn-primary"
-                      transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                    />
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft-sm">
+          <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+            <div className="w-10 h-10 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-950">סיכום תמציתי לפני קנייה</h2>
+              <p className="text-xs text-slate-500">תמונת מצב מרוכזת של הנתונים החשובים לקונה</p>
+            </div>
+          </div>
+
+          <div className="space-y-3.5 text-sm leading-relaxed">
+            
+            {/* Item 1: Ownership */}
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-brand-50 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-brand-200">
+                1
+              </span>
+              <div>
+                <strong className="text-slate-950">מספר יד ומקוריות: </strong>
+                <span className="text-slate-700">
+                  הרכב רשום כ-{report.history.actualHandText} (ברישיון כתוב: 0{report.history.previousOwnersCount} בעלים קודמים). 
+                  {report.history.originalOwnership.includes('החכר') || report.history.originalOwnership.includes('ליסינג') 
+                    ? ' עלה לכביש בליסינג/החכר – לפי מחירון לוי יצחק נדרשת הפחתה של כ-8%–14% ממחיר המחירון המשוקלל.'
+                    : report.history.originalOwnership.includes('השכרה')
+                      ? ' עלה לכביש בהשכרה – לפי מחירון לוי יצחק נדרשת הפחתה משמעותית של כ-15%–22% ממחיר המחירון.'
+                      : ' הרכב במקוריות פרטית מלאה מיום העלייה לכביש.'}
+                </span>
+              </div>
+            </div>
+
+            {/* Item 2: Test & Mileage */}
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-brand-50 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-brand-200">
+                2
+              </span>
+              <div>
+                <strong className="text-slate-950">טסט וקילומטראז': </strong>
+                <span className="text-slate-700">
+                  טסט בתוקף עד {report.identity.registrationValidity}. 
+                  {report.history.lastInspectionMileageKm ? (
+                    <>
+                      {' '}בטסט האחרון ב-{report.identity.lastInspectionDate} נרשמו <strong className="font-mono text-slate-950">{report.history.lastInspectionMileageKm.toLocaleString()} ק"מ</strong>. 
+                      יש לוודא שמד האוץ הנוכחי ברכב גבוה מנתון זה באופן הגיוני.
+                    </>
+                  ) : (
+                    ' ברכבים חדשים עד 3 שנים טרם נרשם קילומטראז׳ במאגר משרד התחבורה ויש לאמת באמצעות ספר טיפולים ממוסך מורשה.'
                   )}
-                  <Icon className="w-4 h-4 relative z-10" />
-                  <span className="relative z-10">{item.label}</span>
-                </button>
-              );
-            })}
+                </span>
+              </div>
+            </div>
+
+            {/* Item 3: Recalls */}
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-brand-50 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-brand-200">
+                3
+              </span>
+              <div>
+                <strong className="text-slate-950">קריאות שירות (ריקול): </strong>
+                <span className="text-slate-700">
+                  {report.recalls.hasActiveRecall 
+                    ? '⚠️ לרכב זה קיימת קריאת שירות פתוחה במשרד התחבורה! חובה לדרוש מבעל הרכב לבצע את התיקון במוסך היבואן לפני חתימה או העברת בעלות.'
+                    : '✅ הרכב נקי מקריאות שירות (ריקול) פתוחות במאגר משרד התחבורה.'}
+                </span>
+              </div>
+            </div>
+
+            {/* Item 4: External Checks */}
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-brand-50 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-brand-200">
+                4
+              </span>
+              <div>
+                <strong className="text-slate-950">מה חובה לבדוק בנפרד (אינו במאגר משרד התחבורה): </strong>
+                <span className="text-slate-700">
+                  המאגר הממשלתי אינו כולל נתוני שעבודים או תאונות. מומלץ לבצע בדיקת משכון ברשם המשכונות (10 ₪) ובדיקת תביעות במרכז הסליקה של חברות הביטוח (10 ₪).
+                </span>
+              </div>
+            </div>
+
           </div>
         </div>
 
         {/* =========================================================
-            REPORT CONTENT SECTIONS
+            OWNERSHIP TIMELINE (Exact Chronological History from 2017)
            ========================================================= */}
-        <div className="space-y-8">
-          
-          {/* 1. פרטי הרכב ומפרט טכני (#identity) */}
-          <section id="identity" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
-                <Car className="w-5 h-5" />
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft-sm">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center">
+                <Users className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-slate-950">פרטי הרכב ומפרט טכני</h2>
-                <p className="text-xs text-slate-500">נתוני רישוי רשמיים, מנוע, מידות ומערכות בטיחות</p>
+                <h2 className="text-lg font-black text-slate-950">היסטוריית בעלויות מלאה</h2>
+                <p className="text-xs text-slate-500">תיעוד העברות הבעלות שנרשמו במשרד התחבורה מ-2017</p>
               </div>
             </div>
 
-            {/* Specs Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 text-sm mb-8">
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">יצרן ודגם</span>
-                <span className="font-bold text-slate-950">{report.identity.make} {report.identity.commercialName}</span>
-              </div>
+            <span className="text-xs font-bold bg-[#f0f1ff] text-brand-700 px-3 py-1.5 rounded-xl">
+              סה״כ {report.history.actualHandText}
+            </span>
+          </div>
 
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">רמת גימור</span>
-                <span className="font-bold text-slate-950">{report.identity.trimLevel}</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">שנת ייצור ועלייה לכביש</span>
-                <span className="font-bold text-slate-950">{report.identity.modelYear} ({report.identity.firstRegistrationDate})</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">ארץ ייצור</span>
-                <span className="font-bold text-slate-950">{report.identity.countryOfOrigin || 'לא צוין'}</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">סוג הנעה ודלק</span>
-                <span className="font-bold text-slate-950">{report.identity.fuelType}</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">תיבת הילוכים</span>
-                <span className="font-bold text-slate-950">{report.specs.transmission.type}</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">קוד מנוע ותזמון</span>
-                <span className="font-bold text-slate-950" dir="ltr">
-                  {report.identity.engineCode} ({report.specs.engine.timingType || 'סטנדרט'})
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">צבע הרכב</span>
-                <span className="font-bold text-slate-950">{report.identity.color}</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">מרכב ודלתות</span>
-                <span className="font-bold text-slate-950">{report.identity.bodyStyle} ({report.identity.doorsCount} דלתות)</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">מידת צמיגים מאושרת</span>
-                <span className="font-bold text-slate-950 font-mono text-xs" dir="ltr">{report.identity.frontTire}</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">משקל כולל / כושר גרירה</span>
-                <span className="font-bold text-slate-950">
-                  {report.specs.performance.grossWeightKg ? `${report.specs.performance.grossWeightKg} ק"ג` : 'לא צוין'}
-                  {report.specs.performance.towingCapacityBrakedKg ? ` (גרירה: ${report.specs.performance.towingCapacityBrakedKg} ק"ג)` : ''}
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">מספר שלדה (VIN ממוסך)</span>
-                <span className="font-bold text-slate-950 font-mono text-xs" dir="ltr">{report.identity.vinMasked || 'לא צוין'}</span>
-              </div>
-            </div>
-
-            {/* Safety Systems Sub-card */}
-            <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <h3 className="text-sm font-extrabold text-slate-950 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-brand-600" />
-                  <span>אבזור ומערכות בטיחות מקוריות</span>
-                </h3>
-                <span className="text-xs font-bold bg-white text-brand-700 px-3 py-1 rounded-xl border border-slate-200/70">
-                  {report.specs.safety.airbagsCount} כריות אוויר • רמת אבזור בטיחותי {report.specs.safety.safetyEquipmentLevel}/8
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 text-xs">
-                {[
-                  { label: 'בקרת יציבות (ESP) ו-ABS', active: report.specs.safety.hasEsp },
-                  { label: 'בקרת סטייה מנתיב', active: report.specs.safety.hasLaneDepartureWarning },
-                  { label: 'ניטור מרחק ובלימת חירום', active: report.specs.safety.hasAutonomousEmergencyBraking },
-                  { label: 'בקרת שיוט אדפטיבית', active: report.specs.safety.hasAdaptiveCruiseControl },
-                  { label: 'זיהוי הולכי רגל', active: report.specs.safety.hasPedestrianDetection },
-                  { label: 'זיהוי שטח מת', active: report.specs.safety.hasBlindSpotDetection },
-                  { label: 'מצלמת רוורס מקורית', active: report.specs.safety.hasReverseCamera },
-                  { label: 'חיישני לחץ אוויר בצמיגים', active: report.specs.safety.hasTirePressureSensors },
-                ].map((sys, idx) => (
-                  <div 
-                    key={idx}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
-                      sys.active 
-                        ? 'bg-white border-slate-200/80 text-slate-900 font-semibold shadow-soft-sm' 
-                        : 'bg-slate-100/50 border-transparent text-slate-400'
-                    }`}
-                  >
-                    {sys.active ? (
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-                    ) : (
-                      <span className="w-4 h-4 rounded-full border border-slate-300 shrink-0" />
-                    )}
-                    <span>{sys.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* 2. צריכת דלק וביצועים (#fuel) */}
-          <section id="fuel" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
-                <BarChart3 className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-950">צריכת דלק, פליטות ומחשבון עלויות</h2>
-                <p className="text-xs text-slate-500">נתוני אמת לפי תקן WLTP וחישוב הוצאה חודשית</p>
-              </div>
-            </div>
-
-            {!isElectric && report.fuel.combinedLitersPer100Km && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center">
-                <div className="p-5 rounded-2xl bg-[#f0f1ff] border border-brand-100">
-                  <span className="text-xs font-bold text-brand-700 block mb-1">צריכה משולבת רשמית</span>
-                  <div className="text-3xl font-black text-slate-950 font-mono">
-                    {report.fuel.combinedKmPerLiter} <span className="text-sm font-bold text-slate-600">ק"מ/ל׳</span>
-                  </div>
-                  <span className="text-xs text-slate-500 mt-1 block">
-                    ({report.fuel.combinedLitersPer100Km} ליטר ל-100 ק"מ)
-                  </span>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                  <span className="text-xs font-semibold text-slate-400 block mb-1">נסיעה עירונית</span>
-                  <div className="text-2xl font-black text-slate-900 font-mono">
-                    {report.fuel.cityLitersPer100Km} <span className="text-xs font-normal text-slate-500">ל׳/100 ק"מ</span>
-                  </div>
-                  <span className="text-xs text-slate-500 mt-1 block">
-                    כ-{(100 / (report.fuel.cityLitersPer100Km || 6)).toFixed(1)} ק"מ לליטר בעיר
-                  </span>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                  <span className="text-xs font-semibold text-slate-400 block mb-1">נסיעה בין-עירונית</span>
-                  <div className="text-2xl font-black text-slate-900 font-mono">
-                    {report.fuel.highwayLitersPer100Km} <span className="text-xs font-normal text-slate-500">ל׳/100 ק"מ</span>
-                  </div>
-                  <span className="text-xs text-slate-500 mt-1 block">
-                    כ-{(100 / (report.fuel.highwayLitersPer100Km || 5)).toFixed(1)} ק"מ לליטר בכביש מהיר
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <FuelCostCalculator 
-              fuelData={report.fuel} 
-              engineData={report.specs.engine} 
-            />
-          </section>
-
-          {/* 3. תקלות, ריקולים ושגרת טיפולים (#problems) */}
-          <section id="problems" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
-                <Wrench className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-950">תקלות נפוצות, ריקולים ושגרת טיפולים</h2>
-                <p className="text-xs text-slate-500">מה חשוב לבדוק בדגם {report.identity.make} {report.identity.commercialName} לפני קנייה</p>
-              </div>
-            </div>
-
-            {/* Active Recall Alert if present */}
-            {report.recalls.hasActiveRecall ? (
-              <div className="mb-6 p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-950">
-                <div className="flex items-center gap-2 font-black text-base text-rose-800 mb-2">
-                  <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
-                  <span>התראה: לרכב זה קיימת קריאת שירות (ריקול) פתוחה במאגר משרד התחבורה!</span>
-                </div>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  {report.recalls.specificVehicleUncompletedRecalls.map((rec, i) => (
-                    <div key={i} className="bg-white/90 p-3.5 rounded-xl border border-rose-200">
-                      <div className="font-bold text-slate-900">סוג תקלה: {rec.faultType}</div>
-                      <div className="text-slate-600 mt-0.5">{rec.description} (תאריך פתיחה: {rec.openDate})</div>
-                    </div>
+          {/* Timeline Table */}
+          {report.history.ownershipTimeline && report.history.ownershipTimeline.length > 0 ? (
+            <div className="overflow-x-auto mb-5">
+              <table className="w-full text-right text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500">
+                    <th className="py-2.5 font-bold">תאריך העברה</th>
+                    <th className="py-2.5 font-bold">סוג בעלות</th>
+                    <th className="py-2.5 font-bold">ספירה כיד במחירון</th>
+                    <th className="py-2.5 font-bold">סטטוס</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {report.history.ownershipTimeline.map((item, idx) => (
+                    <tr key={idx} className={item.isCurrent ? 'bg-brand-50/40 font-bold' : ''}>
+                      <td className="py-3 font-mono text-slate-800">{item.dateStr}</td>
+                      <td className="py-3 font-semibold text-slate-900">
+                        {item.ownership}
+                        {item.isDealer && (
+                          <span className="text-[11px] text-slate-500 font-normal mr-2">
+                            (סוחר רכב מורשה – תו סחר)
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        {item.isDealer ? (
+                          <span className="text-slate-400 font-normal">לא נספר (הפקדת סוחר)</span>
+                        ) : (
+                          <span className="font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md">
+                            יד {item.handIndex}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        {item.isCurrent ? (
+                          <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-md">
+                            בעלות נוכחית
+                          </span>
+                        ) : idx === 0 ? (
+                          <span className="text-slate-500 text-xs">רישום ראשון</span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">הועבר</span>
+                        )}
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mb-6 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-4 shadow-soft-sm">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <div className="text-xs sm:text-sm">
-                    <span className="font-bold text-emerald-950">הרכב נקי מקריאות שירות (ריקול) פתוחות </span>
-                    <span className="text-emerald-800">לפי מאגר הגבלות הרישוי של משרד התחבורה.</span>
-                  </div>
-                </div>
-              </div>
-            )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-[#f7f8fc] text-xs text-slate-600 mb-5">
+              לרכב זה לא נרשמו העברות בעלות נוספות במאגר משרד התחבורה (הרכב נותר בידי הבעלים המקורי – {report.history.originalOwnership}).
+            </div>
+          )}
 
-            {/* Known Model Issues Accordion */}
-            <h3 className="text-sm font-extrabold text-slate-900 mb-3">
-              נקודות תורפה ומחלות דגם מוכרות לבדיקה:
-            </h3>
-            <div className="space-y-3 mb-8">
-              {report.knownProblems.map((prob) => {
-                const isExpanded = expandedProblem === prob.id;
-                return (
-                  <div 
-                    key={prob.id}
-                    className="rounded-2xl border border-slate-200/80 overflow-hidden transition-all shadow-soft-sm"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setExpandedProblem(isExpanded ? null : prob.id)}
-                      className="w-full p-4 bg-[#f7f8fc] hover:bg-slate-100/80 flex items-center justify-between gap-4 text-right transition-colors"
-                    >
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        {renderSeverityBadge(prob.severity)}
-                        <span className="font-bold text-sm sm:text-base text-slate-950">{prob.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="hidden sm:inline text-xs font-bold text-slate-600 font-mono">
-                          ₪{prob.estimatedCostIls.min.toLocaleString()}–₪{prob.estimatedCostIls.max.toLocaleString()}
-                        </span>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
-                      </div>
-                    </button>
+          {/* Legal Note on How to Verify in the Physical License */}
+          <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/60 text-xs text-slate-600 flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold text-slate-900 block mb-0.5">איך לאמת את הנתון ברישיון הרכב המודפס?</span>
+              <span>
+                ברישיון הרכב של המוכר, הביטו בשדה <strong>"בעלים קודמים"</strong>: 
+                מופיע בו המספר <strong>0{report.history.previousOwnersCount}</strong>. 
+                מספר היד הוא תמיד סך הבעלים הקודמים ועוד 1 (כלומר: 0{report.history.previousOwnersCount} = {report.history.actualHandText}).
+              </span>
+            </div>
+          </div>
+        </div>
 
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: 'easeInOut' }}
-                        >
-                          <div className="p-4 sm:p-5 bg-white border-t border-slate-100 text-xs sm:text-sm space-y-3">
-                            <p className="text-slate-700 leading-relaxed">{prob.description}</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                              <div className="p-3.5 rounded-xl bg-[#f7f8fc]">
-                                <span className="font-bold text-slate-900 block mb-1">תסמינים בבדיקה:</span>
-                                <ul className="list-disc list-inside text-slate-600 space-y-0.5">
-                                  {prob.symptoms.map((s, i) => <li key={i}>{s}</li>)}
-                                </ul>
-                              </div>
-                              <div className="p-3.5 rounded-xl bg-[#f7f8fc]">
-                                <span className="font-bold text-slate-900 block mb-1">אומדן תיקון במוסך:</span>
-                                <div className="font-black text-base text-brand-600 font-mono">
-                                  ₪{prob.estimatedCostIls.min.toLocaleString()} – ₪{prob.estimatedCostIls.max.toLocaleString()}
-                                </div>
-                                <span className="text-[11px] text-slate-500">מומלץ לבדוק היסטוריית החלפה מול המוכר</span>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
+        {/* =========================================================
+            TECHNICAL SPECIFICATIONS & EQUIPMENT
+           ========================================================= */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft-sm">
+          <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100">
+            <div className="w-10 h-10 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center">
+              <Car className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-950">נתוני רישוי ומפרט טכני</h2>
+              <p className="text-xs text-slate-500">נתונים רשמיים ממאגר משרד התחבורה ומדדי WLTP</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 text-xs sm:text-sm mb-6">
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">מועד עלייה לכביש</span>
+              <span className="font-bold text-slate-950">{report.identity.firstRegistrationDate}</span>
             </div>
 
-            {/* Maintenance Schedule Summary */}
-            <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h3 className="text-sm font-extrabold text-slate-950">שגרת טיפולים מומלצת ותקן שמן</h3>
-                {report.maintenance.recommendedOilSpec && (
-                  <span className="text-xs font-bold text-brand-700 bg-white px-3 py-1 rounded-xl border border-slate-200/70" dir="ltr">
-                    Oil Spec: {report.maintenance.recommendedOilSpec}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
-                {report.maintenance.schedule.slice(0, 6).map((m, idx) => (
-                  <div key={idx} className="bg-white p-3.5 rounded-xl border border-slate-200/60 flex flex-col justify-between shadow-soft-sm">
-                    <div className="font-bold text-slate-900 mb-1">{m.item}</div>
-                    <div className="text-brand-600 font-semibold">
-                      כל {m.intervalKm.toLocaleString()} ק"מ או {m.intervalMonths} חודשים
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* 4. היסטוריית הרכב ובעלות (#history) */}
-          <section id="history" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-950">היסטוריית הרכב, קילומטראז׳ ושינויי מבנה</h2>
-                <p className="text-xs text-slate-500">תיעוד ממאגרי הרישוי הממשלתיים</p>
-              </div>
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">מנוע והספק</span>
+              <span className="font-bold text-slate-950">
+                {report.specs.engine.displacementCc > 0 ? `${report.specs.engine.displacementCc.toLocaleString()} סמ"ק` : 'חשמלי'}
+                {report.specs.engine.horsepower > 0 ? ` (${report.specs.engine.horsepower} כ"ס)` : ''}
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              
-              {/* Mileage Box */}
-              <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs font-bold text-slate-400 block mb-1">קילומטראז׳ במבחן הרישוי האחרון</span>
-                <div className="text-2xl font-black text-slate-950 font-mono mb-1">
-                  {report.history.mileageAnalysis?.actualKm 
-                    ? `${report.history.mileageAnalysis.actualKm.toLocaleString()} ק"מ` 
-                    : 'טרם דווח במאגר'}
-                </div>
-                <p className="text-xs text-slate-600">
-                  {report.history.mileageAnalysis?.text || 'ברכבים חדשים עד 3 שנים הנתון מתעדכן בטסט הראשון.'}
-                </p>
-              </div>
-
-              {/* Ownership Origin Box */}
-              <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-                <span className="text-xs font-bold text-slate-400 block mb-1">מקוריות רישום ראשונה ובעלות</span>
-                <div className="text-lg font-black text-slate-950 mb-1">
-                  מקוריות: {report.identity.ownershipDetails.originalHandOrigin} • כיום: {report.identity.ownershipDetails.currentCategory}
-                </div>
-                <p className="text-xs text-slate-600">
-                  {report.identity.ownershipDetails.estimatedHandText}
-                </p>
-              </div>
-
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">תיבת הילוכים</span>
+              <span className="font-bold text-slate-950">{report.specs.transmission.type}</span>
             </div>
 
-            {/* Structural Modifications Flags */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">קוד מנוע</span>
+              <span className="font-bold text-slate-950 font-mono" dir="ltr">{report.identity.engineCode}</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">צבע הרכב</span>
+              <span className="font-bold text-slate-950">{report.identity.color}</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">מרכב ומספר דלתות</span>
+              <span className="font-bold text-slate-950">{report.identity.bodyStyle} ({report.identity.doorsCount} דלתות)</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">מידת צמיגים מאושרת</span>
+              <span className="font-bold text-slate-950 font-mono" dir="ltr">{report.identity.frontTire}</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
+              <span className="text-slate-400 block mb-1">אגרת רישוי שנתית (טסט)</span>
+              <span className="font-bold text-slate-950">קבוצה {report.costs.licensingGroup} (כ-₪{report.costs.annualLicensingFeeIls})</span>
+            </div>
+          </div>
+
+          {/* Safety Systems Checklist */}
+          <div className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/60">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-bold text-slate-950 text-xs sm:text-sm">מערכות בטיחות מקוריות</span>
+              <span className="text-xs font-bold bg-white text-brand-700 px-3 py-1 rounded-xl border border-slate-200/80">
+                רמת אבזור בטיחותי {report.specs.safety.safetyEquipmentLevel}/8 • {report.specs.safety.airbagsCount} כריות אוויר
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {[
-                { label: 'שינוי מבנה ברישיון', flag: report.history.hasStructuralModification },
-                { label: 'מערכת גפ"מ (גז)', flag: report.history.hasLpgConversion },
-                { label: 'רישום שינוי צבע', flag: report.history.hasColorChange },
-                { label: 'שינוי מידת צמיגים', flag: report.history.hasTireSizeChange },
-              ].map((item, i) => (
-                <div key={i} className="p-3.5 rounded-2xl bg-[#f7f8fc] border border-slate-100 flex items-center justify-between">
-                  <span className="font-semibold text-slate-700">{item.label}</span>
-                  <span className={`font-bold px-2 py-0.5 rounded-md ${
-                    item.flag ? 'bg-amber-100 text-amber-900' : 'bg-emerald-50 text-emerald-700'
-                  }`}>
-                    {item.flag ? 'בוצע' : 'ללא'}
-                  </span>
+                { label: 'בקרת יציבות (ESP) ו-ABS', active: report.specs.safety.hasEsp },
+                { label: 'בקרת סטייה מנתיב', active: report.specs.safety.hasLaneDepartureWarning },
+                { label: 'בלימת חירום אוטונומית', active: report.specs.safety.hasAutonomousEmergencyBraking },
+                { label: 'בקרת שיוט אדפטיבית', active: report.specs.safety.hasAdaptiveCruiseControl },
+                { label: 'זיהוי הולכי רגל', active: report.specs.safety.hasPedestrianDetection },
+                { label: 'זיהוי שטח מת', active: report.specs.safety.hasBlindSpotDetection },
+                { label: 'מצלמת רוורס מקורית', active: report.specs.safety.hasReverseCamera },
+                { label: 'חיישני לחץ אוויר בצמיגים', active: report.specs.safety.hasTirePressureSensors }
+              ].map((sys, i) => (
+                <div 
+                  key={i} 
+                  className={`flex items-center gap-1.5 p-2 rounded-xl border ${
+                    sys.active ? 'bg-white border-slate-200 text-slate-900 font-semibold' : 'bg-slate-100/60 border-transparent text-slate-400'
+                  }`}
+                >
+                  {sys.active ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
+                  ) : (
+                    <span className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
+                  )}
+                  <span className="truncate">{sys.label}</span>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
 
-          {/* 5. שווי שוק, עלויות ובדיקות חובה לפני קנייה (#market) */}
-          <section id="market" className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-white/80 scroll-mt-28">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center shadow-soft-sm">
-                <Scale className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-950">שווי שוק, עלויות רישוי ובדיקה לפני קנייה</h2>
-                <p className="text-xs text-slate-500">השפעת מקוריות על המחירון, אגרת רישוי ובדיקות שעבוד ועבר ביטוחי</p>
-              </div>
+        </div>
+
+        {/* =========================================================
+            MANDATORY EXTERNAL REGISTRY CHECKS
+           ========================================================= */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft-sm">
+          <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+            <div className="w-10 h-10 rounded-2xl bg-[#f0f1ff] text-brand-600 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5" />
             </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-950">בדיקות רשמיות חובה לפני העברת תשלום</h2>
+              <p className="text-xs text-slate-500">שירותים ממשלתיים וציבוריים שחובה לבדוק ישירות</p>
+            </div>
+          </div>
 
-            {/* Market Price Impact + Licensing Group */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="sm:col-span-2 p-5 rounded-2xl bg-[#f0f1ff] border border-brand-100">
-                <span className="text-xs font-bold text-brand-700 block mb-1">השפעת מקוריות על שווי השוק והמחירון</span>
-                <div className="text-sm sm:text-base font-bold text-slate-950 leading-relaxed">
-                  {report.identity.ownershipDetails.resalePriceImpact}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {/* Check 1: Rasham HaMashkonot */}
+            <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-black text-slate-950 text-sm">רשם המשכונות (משרד המשפטים)</h3>
+                  <span className="text-xs font-bold bg-white text-brand-700 px-2 py-0.5 rounded-md border border-slate-200">
+                    אגרה: 10 ₪
+                  </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  {report.identity.ownershipDetails.howToVerifyDocument[0]}
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                  בדיקה רשמית לוודא שהרכב אינו משועבד לבנק, לחברת מימון או להוצאה לפועל. רכב ממושכן עלול להילקח מהקונה גם לאחר העברת בעלות בדואר!
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100 flex flex-col justify-center text-center">
-                <span className="text-xs font-semibold text-slate-400 block mb-1">אגרת רישוי שנתית (קבוצה {report.costs.licensingGroup})</span>
-                <div className="text-2xl font-black text-slate-950 font-mono">
-                  ₪{report.costs.annualLicensingFeeIls.toLocaleString()}
+              <a
+                href="https://pledges.justice.gov.il/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-white hover:bg-brand-600 text-slate-900 hover:text-white border border-slate-300 hover:border-brand-600 rounded-xl font-bold text-xs transition-all shadow-sm"
+              >
+                <span>מעבר לבדיקת משכון מקוונת (משרד המשפטים)</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            {/* Check 2: Insurance Clearing House */}
+            <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-black text-slate-950 text-sm">מרכז הסליקה של חברות הביטוח</h3>
+                  <span className="text-xs font-bold bg-white text-brand-700 px-2 py-0.5 rounded-md border border-slate-200">
+                    עלות: 10 ₪
+                  </span>
                 </div>
-                <span className="text-[11px] text-slate-400 mt-1">לפי תעריף משרד התחבורה</span>
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                  הפקת דוח עבר ביטוחי מלא ב-7 השנים האחרונות: האם שולמו תביעות תאונה, נזקים, ירידת ערך או אובדן להלכה (טוטאל לוס שהוחזר לכביש).
+                </p>
               </div>
+
+              <a
+                href="https://slika-ins.co.il/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-white hover:bg-brand-600 text-slate-900 hover:text-white border border-slate-300 hover:border-brand-600 rounded-xl font-bold text-xs transition-all shadow-sm"
+              >
+                <span>מעבר למרכז הסליקה (היסטוריית תביעות)</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
             </div>
 
-            {/* Official Registry Checks (Mashkonot & Slika) */}
-            <h3 className="text-sm font-extrabold text-slate-950 mb-3">
-              בדיקות רשמיות מומלצות לפני העברת בעלות:
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8 text-xs">
-              {report.buyerDecision.officialRegistryChecks.map((check, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-[#f7f8fc] border border-slate-200/70 flex flex-col justify-between shadow-soft-sm">
-                  <div>
-                    <div className="flex justify-between items-center mb-1 font-bold text-slate-950 text-sm">
-                      <span>{check.title}</span>
-                      <span className="text-xs text-brand-600 bg-white px-2 py-0.5 rounded-lg border border-slate-200/70">{check.cost}</span>
-                    </div>
-                    <p className="text-slate-600 leading-relaxed mt-1">{check.description}</p>
-                  </div>
-                  <a
-                    href={check.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 bg-white hover:bg-brand-600 text-slate-900 hover:text-white border border-slate-200/80 hover:border-brand-600 rounded-xl font-bold text-xs transition-all shadow-soft-sm"
-                  >
-                    <span>למעבר לשירות הרשמי</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              ))}
-            </div>
-
-            {/* Seller Questions */}
-            <div className="p-5 rounded-2xl bg-[#f7f8fc] border border-slate-100">
-              <h3 className="text-sm font-extrabold text-slate-950 mb-3 flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-brand-600" />
-                <span>שאלות מומלצות למוכר לפני שמגיעים לראות את הרכב:</span>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                {report.buyerDecision.sellerQuestionsScript.slice(0, 4).map((q, i) => (
-                  <div key={i} className="p-3.5 rounded-xl bg-white border border-slate-200/60 shadow-soft-sm">
-                    <div className="font-bold text-slate-950 mb-1">"{q.question}"</div>
-                    <div className="text-slate-500">{q.reason}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </section>
-
+          </div>
         </div>
 
       </div>
