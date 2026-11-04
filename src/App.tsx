@@ -80,9 +80,9 @@ export const App: React.FC = () => {
   // Update dynamic page title & meta for SEO
   useEffect(() => {
     if (report) {
-      document.title = `${report.identity.make} ${report.identity.commercialName} (${report.identity.modelYear}) - מספר ${report.formattedPlate} | דוח רכב AutoScope`;
+      document.title = `${report.identity.make} ${report.identity.commercialName} (${report.identity.modelYear}) - מספר ${report.formattedPlate} | CarInfo`;
     } else {
-      document.title = 'AutoScope Israel | בדיקת רכב לפני קנייה לפי מספר רישוי';
+      document.title = 'CarInfo | מכירים את הרכב. באמת. – בדיקת רכב לפי מספר רישוי';
     }
   }, [report]);
 
@@ -133,7 +133,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans selection:bg-brand-500 selection:text-white" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-[#f7f8fc] font-sans selection:bg-brand-600 selection:text-white" dir="rtl">
       
       {/* Keyboard Accessibility: Skip to Main Content Link */}
       <a href="#main-content" className="skip-to-content-link">
