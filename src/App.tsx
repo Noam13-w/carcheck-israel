@@ -57,25 +57,36 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handle URL routing: /car/:plate OR ?plate=:plate
+  // Handle URL routing: /car/:plate OR ?plate=:plate + Popstate
   useEffect(() => {
-    let initialPlate: string | null = null;
-
-    // Check query params
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('plate')) {
-      initialPlate = params.get('plate');
-    } else {
-      // Check path /car/:plate
-      const match = window.location.pathname.match(/\/car\/(\d+)/i);
-      if (match && match[1]) {
-        initialPlate = match[1];
+    const parseUrlAndLoad = () => {
+      let initialPlate: string | null = null;
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('plate')) {
+        initialPlate = params.get('plate');
+      } else {
+        const match = window.location.pathname.match(/\/car\/(\d+)/i);
+        if (match && match[1]) {
+          initialPlate = match[1];
+        }
       }
-    }
 
-    if (initialPlate) {
-      handleSearch(initialPlate);
-    }
+      if (initialPlate) {
+        handleSearch(initialPlate);
+      } else {
+        setReport(null);
+        setError(null);
+        setSearchedPlate('');
+      }
+    };
+
+    parseUrlAndLoad();
+
+    const handlePopState = () => {
+      parseUrlAndLoad();
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Update dynamic page title & meta for SEO
@@ -223,6 +234,7 @@ export const App: React.FC = () => {
               <ReportView 
                 report={report}
                 onNewSearch={handleReset}
+                onSearchPlate={(plate) => handleSearch(plate)}
                 onRefresh={(plate) => handleSearch(plate, true)}
                 isRefreshing={isRefreshing}
               />

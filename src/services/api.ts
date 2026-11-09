@@ -117,7 +117,7 @@ export async function fetchVehicleReport(
   }
 
   const plateNum = parseInt(cleanPlate, 10);
-  const cacheKey = `autoscope_report_${cleanPlate}`;
+  const cacheKey = `carinfo_v4_report_${cleanPlate}`;
 
   // Smart Cache Invalidation logic
   if (!forceRefresh) {
@@ -128,26 +128,26 @@ export async function fetchVehicleReport(
         const cacheAgeMs = Date.now() - new Date(parsed.generatedAt).getTime();
         const cacheAgeDays = Math.floor(cacheAgeMs / (1000 * 60 * 60 * 24));
 
-        // If cache is fresh (< 7 days) and valid, use it immediately
-        if (cacheAgeDays < 7) {
-          onProgress?.('טוען נתונים מהמטמון המאומת...', 100);
-          parsed.cacheMetadata = {
-            cachedAt: parsed.generatedAt,
-            cacheAgeDays,
-            isStale: false
-          };
-          return parsed;
-        }
+        // Ensure cached report has required modern fields before serving
+        if (parsed?.history?.actualHandText && parsed?.seoInterlinking?.relatedVehicles) {
+          if (cacheAgeDays < 7) {
+            onProgress?.('טוען נתונים מהמטמון המאומת...', 100);
+            parsed.cacheMetadata = {
+              cachedAt: parsed.generatedAt,
+              cacheAgeDays,
+              isStale: false
+            };
+            return parsed;
+          }
 
-        // If cache is between 7 and 30 days, we can mark it as stale or revalidate
-        if (cacheAgeDays < 30) {
-          parsed.cacheMetadata = {
-            cachedAt: parsed.generatedAt,
-            cacheAgeDays,
-            isStale: true
-          };
-          // Return stale data quickly, but user can click refresh
-          return parsed;
+          if (cacheAgeDays < 30) {
+            parsed.cacheMetadata = {
+              cachedAt: parsed.generatedAt,
+              cacheAgeDays,
+              isStale: true
+            };
+            return parsed;
+          }
         }
       }
     } catch (e) {
@@ -230,7 +230,13 @@ export async function fetchVehicleReport(
         `SELECT * FROM "${SHINUI_MIVNE_1}" WHERE mispar_rechev = ${plateNum} LIMIT 1`
       );
       if (!records.length) {
+        records = await queryDatastoreSearch(SHINUI_MIVNE_1, { mispar_rechev: cleanPlate });
+      }
+      if (!records.length) {
         records = await queryDatastoreSearch(SHINUI_MIVNE_1, { mispar_rechev: plateNum });
+      }
+      if (!records.length) {
+        records = await queryDatastoreText(SHINUI_MIVNE_1, cleanPlate);
       }
       return records;
     })(),
@@ -241,7 +247,13 @@ export async function fetchVehicleReport(
         `SELECT * FROM "${SHINUI_MIVNE_2}" WHERE mispar_rechev = ${plateNum} ORDER BY baalut_dt ASC`
       );
       if (!records.length) {
+        records = await queryDatastoreSearch(SHINUI_MIVNE_2, { mispar_rechev: cleanPlate });
+      }
+      if (!records.length) {
         records = await queryDatastoreSearch(SHINUI_MIVNE_2, { mispar_rechev: plateNum });
+      }
+      if (!records.length) {
+        records = await queryDatastoreText(SHINUI_MIVNE_2, cleanPlate);
       }
       return records;
     })(),
@@ -348,34 +360,72 @@ export async function fetchVehicleReport(
   );
 
   // Process verified chronological ownership timeline from Ministry of Transport (SHINUI_MIVNE_2)
-  const sortedOwnership = [...ownershipHistoryRecords].sort((a: any, b: any) => 
-    (a.baalut_dt || '').localeCompare(b.baalut_dt || '')
-  );
+  const sortedOwnership = [...ownershipHistoryRecords].sort((a: any, b: any) => {
+    const valA = String(a.baalut_dt || '');
+    const valB = String(b.baalut_dt || '');
+    return valA.localeCompare(valB);
+  });
+
+  // Deduplicate consecutive identical records in same month
+  const dedupedOwnership: any[] = [];
+  for (const item of sortedOwnership) {
+    const last = dedupedOwnership[dedupedOwnership.length - 1];
+    if (last && String(last.baalut_dt) === String(item.baalut_dt) && last.baalut === item.baalut) {
+      continue;
+    }
+    dedupedOwnership.push(item);
+  }
 
   let currentHandCount = 0;
-  const ownershipTimeline = sortedOwnership.map((item: any, idx: number) => {
-    const isDealer = item.baalut === 'סוחר';
-    if (!isDealer) {
-      currentHandCount++;
-    }
-    let dateStr = item.baalut_dt || '';
-    if (dateStr.length === 6) {
-      dateStr = `${dateStr.slice(4, 6)}/${dateStr.slice(0, 4)}`;
-    }
-    return {
-      dateStr: dateStr || 'תאריך לא צוין',
-      rawDate: item.baalut_dt || '',
-      ownership: item.baalut || 'לא צוין',
-      isDealer,
-      handIndex: isDealer ? null : currentHandCount,
-      isCurrent: idx === sortedOwnership.length - 1
-    };
-  });
+  let ownershipTimeline: any[] = [];
+
+  if (dedupedOwnership.length > 0) {
+    ownershipTimeline = dedupedOwnership.map((item: any, idx: number) => {
+      const isDealer = item.baalut === 'סוחר';
+      if (!isDealer) {
+        currentHandCount++;
+      }
+      const rawStr = String(item.baalut_dt || '').trim();
+      let dateStr = rawStr;
+      if (rawStr.length === 6) {
+        dateStr = `${rawStr.slice(4, 6)}/${rawStr.slice(0, 4)}`;
+      }
+      return {
+        dateStr: dateStr || 'תאריך לא צוין',
+        rawDate: rawStr,
+        ownership: item.baalut || 'לא צוין',
+        isDealer,
+        handIndex: isDealer ? null : currentHandCount,
+        isCurrent: idx === dedupedOwnership.length - 1
+      };
+    });
+  } else {
+    // When no transfer records exist in SHINUI_MIVNE_2, vehicle is in its original hand
+    const isPost2017 = shnatYitzur >= 2017;
+    currentHandCount = 1;
+    ownershipTimeline = [
+      {
+        dateStr: activeRec.moed_aliya_lakvish || `${shnatYitzur}-01`,
+        rawDate: `${shnatYitzur}01`,
+        ownership: shinui.mkoriut_nm || activeRec.baalut || 'פרטי',
+        isDealer: false,
+        handIndex: 1,
+        isCurrent: true,
+        note: isPost2017 
+          ? 'עלייה לכביש (רישום מקורי יחיד – ללא העברות בעלות נוספות במאגר משרד התחבורה)'
+          : 'עלייה לכביש (רכב טרום 2017 – מאגר העברות בעלות דיגיטלי נפתח רק ב-2017)'
+      }
+    ];
+  }
 
   const actualHandNumber = Math.max(1, currentHandCount || 1);
   const actualHandText = `יד ${actualHandNumber}`;
   const previousOwnersCount = Math.max(0, actualHandNumber - 1);
   const licenseRegistrationNote = `ברישיון הרכב רשום: 0${previousOwnersCount} בעלים קודמים`;
+
+  // Raw Mileage resolution from multiple possible fields
+  const rawKm = shinui.kilometer_test_aharon || shinui.km_test_aharon || shinui.kilometer;
+  const lastKm = rawKm ? parseInt(rawKm, 10) : undefined;
 
   // Ownership & Hand Intelligence
   const firstReg = activeRec.moed_aliya_lakvish || `${shnatYitzur}-01`;
@@ -464,7 +514,7 @@ export async function fetchVehicleReport(
     importerWebsite: r.WEBSITE || ''
   }));
 
-  const lastKm = shinui.kilometer_test_aharon ? parseInt(shinui.kilometer_test_aharon, 10) : undefined;
+
 
   // Buyer Decision Suite Calculation
   const buyerDecision = calculateBuyerDecision(

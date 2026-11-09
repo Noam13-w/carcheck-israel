@@ -203,6 +203,7 @@ export interface VehicleReportData {
       isDealer: boolean; // תו סחר - אינו מוסיף יד
       handIndex: number | null; // 1, 2, 3...
       isCurrent: boolean;
+      note?: string;
     }[];
 
     // High Risk Flags

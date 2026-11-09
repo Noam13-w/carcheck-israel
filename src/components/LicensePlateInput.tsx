@@ -22,9 +22,9 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
 
   const samplePlates = [
-    { plate: '42822302', label: 'טויוטה קורולה 2021' },
+    { plate: '42822302', label: 'טויוטה קורולה היבריד 2021' },
     { plate: '84457801', label: 'יונדאי איוניק 2020' },
-    { plate: '36181801', label: 'סקודה אוקטביה RS' },
+    { plate: '36181801', label: 'סקודה אוקטביה 1.4 TSI' },
     { plate: '7943026', label: 'סקודה סופרב דיזל' },
   ];
 
@@ -66,25 +66,23 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
           הזנת מספר רישוי ישראלי לבדיקה (7 או 8 ספרות)
         </label>
 
-        {/* Outer Floating Pill Container - Matching CarInfo Mockup */}
-        <motion.div 
-          animate={{
-            boxShadow: isFocused 
-              ? '0 20px 50px -10px rgba(75, 69, 230, 0.3), 0 0 0 2px rgba(75, 69, 230, 0.4)' 
-              : '0 20px 50px -10px rgba(75, 69, 230, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.95), 0 10px 20px -5px rgba(0, 0, 0, 0.04)'
-          }}
-          transition={{ duration: 0.25 }}
-          className="bg-white/95 backdrop-blur-xl p-2 sm:p-2.5 rounded-3xl sm:rounded-full border border-white flex flex-col sm:flex-row-reverse items-stretch sm:items-center gap-2 sm:gap-2.5"
+        {/* Outer Solid Capsule Container */}
+        <div 
+          className={`bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-full border transition-all duration-200 flex flex-col sm:flex-row-reverse items-stretch sm:items-center gap-2 sm:gap-2.5 ${
+            isFocused 
+              ? 'border-blue-600 ring-4 ring-blue-100/80 shadow-md' 
+              : 'border-slate-300 shadow-sm hover:border-slate-400'
+          }`}
         >
           
-          {/* Authentic Israeli License Plate Capsule */}
+          {/* Authentic Israeli Yellow License Plate Capsule */}
           <div 
-            className="relative flex-1 flex items-center bg-[#f9d616] rounded-2xl sm:rounded-full border-2 border-slate-900/95 h-14 sm:h-16 overflow-hidden shadow-plate focus-within:ring-2 focus-within:ring-brand-500 transition-all"
+            className="relative flex-1 flex items-center bg-[#facc15] rounded-xl sm:rounded-full border-2 border-slate-950 h-13 sm:h-15 overflow-hidden shadow-inner focus-within:ring-2 focus-within:ring-blue-500 transition-all"
             dir="ltr"
           >
             {/* Left Blue IL Flag Strip */}
             <div 
-              className="h-full flex items-stretch shrink-0 select-none border-r-2 border-slate-900/90"
+              className="h-full flex items-stretch shrink-0 select-none border-r-2 border-slate-950"
               aria-hidden="true"
             >
               <div className="w-10 sm:w-12 bg-[#0038b8] text-white flex flex-col items-center justify-center py-1 px-1">
@@ -111,15 +109,12 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
               aria-required="true"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? "plate-error-msg" : undefined}
-              className="w-full h-full bg-transparent text-slate-950 font-black text-2xl sm:text-[30px] tracking-[0.1em] text-center focus:outline-none placeholder:text-slate-900/30 plate-font pr-9 pl-2"
+              className="w-full h-full bg-transparent text-slate-950 font-black text-2xl sm:text-[28px] tracking-[0.12em] text-center focus:outline-none placeholder:text-slate-900/35 plate-font pr-9 pl-2"
             />
 
             {/* Clear Button */}
             {value && !isLoading && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
+              <button
                 type="button"
                 onClick={() => setValue('')}
                 className="absolute right-3 text-slate-700 hover:text-slate-950 p-1 rounded-full hover:bg-black/10 transition-colors focus:outline-none"
@@ -127,23 +122,21 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
                 title="נקה מספר"
               >
                 <X className="w-4 h-4 stroke-[2.5]" />
-              </motion.button>
+              </button>
             )}
           </div>
 
-          {/* Primary CTA Search Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          {/* Solid Royal Blue Action Button */}
+          <button
             type="submit"
             disabled={isLoading}
             aria-label="בדיקת רכב"
-            className="h-13 sm:h-16 px-6 sm:px-8 bg-gradient-to-l from-brand-600 to-[#5e5ce6] hover:from-brand-700 hover:to-brand-600 text-white font-bold text-base sm:text-lg rounded-2xl sm:rounded-full shadow-btn-primary hover:shadow-btn-hover flex items-center justify-center gap-2.5 transition-all shrink-0 focus:outline-none focus:ring-4 focus:ring-brand-300"
+            className="h-12 sm:h-15 px-6 sm:px-8 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold text-base sm:text-lg rounded-xl sm:rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center gap-2.5 shrink-0 focus:outline-none focus:ring-4 focus:ring-blue-200"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>בודק...</span>
+                <span>בודק מאגרים...</span>
               </div>
             ) : (
               <>
@@ -151,9 +144,9 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
                 <span>בדיקת רכב</span>
               </>
             )}
-          </motion.button>
+          </button>
 
-        </motion.div>
+        </div>
 
         {/* Validation Error Message */}
         <AnimatePresence>
@@ -164,7 +157,7 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
               exit={{ opacity: 0, y: -4 }}
               id="plate-error-msg" 
               role="alert" 
-              className="mt-2 text-right text-xs font-bold text-rose-600 bg-white/90 inline-block px-3 py-1 rounded-xl shadow-soft-sm border border-rose-100"
+              className="mt-2 text-right text-xs font-bold text-rose-700 bg-rose-50 inline-block px-3 py-1 rounded-lg border border-rose-200"
             >
               {error}
             </motion.p>
@@ -172,12 +165,12 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
         </AnimatePresence>
       </form>
 
-      {/* Sub-caption matching reference design + Quick sample chips */}
+      {/* Sub-caption + Quick sample chips */}
       {variant === 'hero' && (
-        <div className="mt-3.5 space-y-2">
-          {/* Lock Badge - Centered right under the search bar */}
-          <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-600">
-            <Lock className="w-3.5 h-3.5 text-slate-500" />
+        <div className="mt-3 space-y-2">
+          {/* Security & Data Source Note */}
+          <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 font-medium">
+            <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>מידע ממקורות רשמיים ומאומתים</span>
           </div>
 
@@ -185,17 +178,15 @@ export const LicensePlateInput: React.FC<LicensePlateInputProps> = ({
           <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
             <span className="text-[11px] font-semibold text-slate-500 ml-1">לדוגמה:</span>
             {samplePlates.map((s) => (
-              <motion.button
+              <button
                 key={s.plate}
-                whileHover={{ y: -2, scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
                 type="button"
                 onClick={() => handleSampleClick(s.plate)}
                 disabled={isLoading}
-                className="text-[11px] font-semibold px-3 py-1 rounded-full bg-white/90 hover:bg-white text-slate-700 hover:text-brand-700 border border-slate-200/80 shadow-soft-sm transition-all"
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-950 border border-slate-200 transition-colors"
               >
                 {s.label}
-              </motion.button>
+              </button>
             ))}
           </div>
         </div>
